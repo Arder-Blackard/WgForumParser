@@ -1,0 +1,67 @@
+﻿<views:ViewBase x:Class="ForumParserWPF.Views.Windows.LoginHelperWindow"
+                x:TypeArguments="windows:LoginHelperWindowViewModel"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                xmlns:windows="clr-namespace:ForumParserWPF.ViewModels.Windows"
+                xmlns:views="clr-namespace:ForumParserWPF.Views"
+                xmlns:wpf="clr-namespace:CefSharp.Wpf;assembly=CefSharp.Wpf"
+                xmlns:cefHandlers="clr-namespace:ForumParserWPF.Views.CefHandlers"
+                xmlns:windows1="clr-namespace:ForumParserWPF.Views.Windows"
+                xmlns:controls="clr-namespace:ForumParserWPF.Views.Controls"
+                xmlns:converters="clr-namespace:ForumParserWPF.Views.Converters"
+                mc:Ignorable="d"
+                Title="LoginHelperWindow" Height="768" Width="1200"
+                WindowStartupLocation="CenterOwner"
+                d:DataContext="{d:DesignInstance d:Type=windows:LoginHelperWindowViewModel, IsDesignTimeCreatable=True}">
+    <Grid>
+        <Grid.Resources>
+            <converters:BoolConverter x:Key="InfoBackgroundConverter"
+                                      True="{x:Static Brushes.PaleGreen}"
+                                      False="{x:Static Brushes.LightGoldenrodYellow}" />
+            <converters:BoolConverter x:Key="BoolToVisibilityConverter"
+                                      True="Collapsed"
+                                      False="Visible" />
+            <converters:BoolConverter x:Key="InvBoolToVisibilityConverter"
+                                      True="Visible"
+                                      False="Collapsed" />
+
+        </Grid.Resources>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Border Padding="6"
+                Background="{Binding IsLoginSuccessful, Converter={StaticResource InfoBackgroundConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Margin="6,0"
+                           VerticalAlignment="Center"
+                           Visibility="{Binding IsLoginSuccessful, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Visible}">
+                    <Run>Выполните вход на сайт</Run>
+                    <Hyperlink Click="Hyperlink_Click">http://supertest.worldoftanks.com</Hyperlink>
+                    <Run>в окне ниже</Run>
+                </TextBlock>
+                <TextBlock Grid.Column="0" Margin="6,0"
+                           Foreground="DarkGreen" VerticalAlignment="Center" FontWeight="Bold"
+                           Visibility="{Binding IsLoginSuccessful, Converter={StaticResource InvBoolToVisibilityConverter}, FallbackValue=Collapsed}">
+                    <Run>Логин успешен</Run>
+                </TextBlock>
+                <Button Grid.Column="1" IsEnabled="{Binding IsLoginSuccessful}" IsDefault="True"
+                        Click="ConfirmLogin_Click" Padding="3">
+                    Подтвердить
+                </Button>
+            </Grid>
+        </Border>
+        <controls:CefWebBrowser Grid.Row="1"
+                                x:Name="WebBrowser"
+                                Address="http://supertest.worldoftanks.com"
+                                LoadHandler="{Binding LoadHandler}" />
+
+    </Grid>
+</views:ViewBase>

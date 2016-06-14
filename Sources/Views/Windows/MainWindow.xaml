@@ -1,0 +1,395 @@
+﻿<views:ViewBase x:Class="ForumParserWPF.Views.Windows.MainWindow"
+                x:TypeArguments="viewModels:MainWindowViewModel"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                xmlns:views="clr-namespace:ForumParserWPF.Views"
+                xmlns:viewModels="clr-namespace:ForumParserWPF.ViewModels.Windows"
+                xmlns:converters="clr-namespace:ForumParserWPF.Views.Converters"
+                xmlns:logging="clr-namespace:CommonLib.Logging;assembly=CommonLib"
+                mc:Ignorable="d"
+                Height="800" Width="1400" MinWidth="960" MinHeight="600"
+                d:DataContext="{d:DesignInstance d:Type={x:Type viewModels:MainWindowViewModel}, d:IsDesignTimeCreatable=True}"
+                SnapsToDevicePixels="True" Title="{Binding ViewTitle}"
+                Background="{x:Static SystemColors.ControlBrush}">
+    <Grid Margin="5">
+
+        <Grid.Resources>
+
+            <Style TargetType="Button">
+                <Setter Property="Margin" Value="3,0" />
+                <Setter Property="Padding" Value="8,1" />
+            </Style>
+
+            <ControlTemplate x:Key="ExpanderToggleButton" TargetType="{x:Type ToggleButton}">
+                <Border x:Name="ExpanderButtonBorder"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        Padding="{TemplateBinding Padding}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Rectangle Fill="Transparent" Grid.ColumnSpan="2" />
+                        <Grid Grid.Column="0" Width="15" Height="13" Background="Transparent">
+                            <Path x:Name="ExpandPath"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Center"
+                                  Margin="1,1,1,1"
+                                  Fill="{x:Static SystemColors.ActiveCaptionTextBrush}"
+                                  Data="M 4 0 L 8 4 L 4 8 Z" />
+                        </Grid>
+                        <ContentPresenter x:Name="HeaderContent" Grid.Column="1" Margin="4,0,0,0"
+                                          ContentSource="Content" />
+                    </Grid>
+                </Border>
+                <ControlTemplate.Triggers>
+                    <!--Change the sign to minus when toggled-->
+                    <Trigger Property="IsChecked" Value="True">
+                        <Setter Property="Data" TargetName="ExpandPath" Value="M 0 4 L 8 4 L 4 8 Z" />
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+
+        </Grid.Resources>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Border BorderThickness="1" BorderBrush="DarkGray">
+            <Border.Resources>
+                <ControlTemplate TargetType="{x:Type Expander}" x:Key="ExpanderTemplate">
+                    <DockPanel Background="{TemplateBinding Background}">
+                        <ToggleButton x:Name="ExpanderButton" DockPanel.Dock="Top" Content="{TemplateBinding Header}"
+                                      IsChecked="{Binding Path=IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
+                                      OverridesDefaultStyle="True" Padding="1.5,0"
+                                      Template="{StaticResource ExpanderToggleButton}" />
+
+                        <ContentPresenter x:Name="ExpanderContent" Visibility="Collapsed" DockPanel.Dock="Bottom"
+                                          Margin="{TemplateBinding Padding}" />
+
+                    </DockPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="True">
+                            <Setter TargetName="ExpanderContent" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Border.Resources>
+            <Expander Header="Параметры" IsExpanded="True" Background="{x:Static SystemColors.ControlBrush}"
+                      Template="{StaticResource ExpanderTemplate}" Padding="5">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid HorizontalAlignment="Stretch">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Margin="3" VerticalAlignment="Center">Url темы:</TextBlock>
+                        <TextBox Grid.Column="1" Margin="3" Text="{Binding TopicUrl}" HorizontalAlignment="Stretch"
+                                 VerticalContentAlignment="Center" />
+                        <Button Grid.Column="2" Margin="3" Command="{Binding LoginCommand}" Padding="8,1"
+                                Content="Обработка" />
+                    </Grid>
+                    <GroupBox Grid.Row="1" Header="Опции чтения темы" Padding="-1,6,3,3" BorderBrush="DarkGray">
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel.Resources>
+                                <Style TargetType="CheckBox">
+                                    <Setter Property="Margin" Value="7,0" />
+                                </Style>
+                            </StackPanel.Resources>
+                            <CheckBox Content="Исключать админов" IsChecked="{Binding ExcludeAdministrators}" />
+                            <CheckBox Content="Исключать координаторов" IsChecked="{Binding ExcludeCoordinators}" />
+                            <CheckBox Content="Исключать удаленные сообщения"
+                                      IsChecked="{Binding ExcludeDeletedMessages}" />
+                            <CheckBox Content="Только голосование" IsChecked="{Binding ParsePollOnly}" />
+                        </StackPanel>
+                    </GroupBox>
+                    <UniformGrid Grid.Row="2" Rows="1">
+                        <GroupBox Header="Промежуточный результат" Padding="4,6,3,3" BorderBrush="DarkGray">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Command="{Binding SaveIntermediateResultCommand}">Сохранить...</Button>
+                                <Button Command="{Binding LoadIntermediateResultCommand}">Загрузить...</Button>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Header="Результаты работы" Padding="4,6,3,3" BorderBrush="DarkGray">
+                            <StackPanel Orientation="Horizontal">
+                                <StackPanel.Resources>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Margin" Value="3,0" />
+                                        <Setter Property="Padding" Value="8,1" />
+                                    </Style>
+                                </StackPanel.Resources>
+                                <Button Command="{Binding SaveIntermediateResultCommand}">Сохранить...</Button>
+                                <Button Command="{Binding LoadIntermediateResultCommand}">Загрузить...</Button>
+                            </StackPanel>
+                        </GroupBox>
+                    </UniformGrid>
+
+                </Grid>
+            </Expander>
+        </Border>
+        <Grid Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,3">
+            <TabControl>
+                <TabItem Header="Фидбеки и голоса" Foreground="Blue">
+                    <Grid>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid>
+                            <Grid.Resources>
+                                <Style TargetType="Button">
+                                    <Setter Property="Margin" Value="3" />
+                                    <Setter Property="Padding" Value="0" />
+                                </Style>
+
+                                <Style TargetType="{x:Type ListView}">
+                                    <Setter Property="Margin" Value="0" />
+                                </Style>
+                                <Style x:Key="DataGirdBorder" TargetType="Border">
+                                    <Setter Property="Margin" Value="3" />
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="BorderBrush" Value="Black" />
+                                    <Setter Property="BorderThickness" Value="1" />
+                                </Style>
+                                <Style TargetType="{x:Type DataGrid}">
+                                    <Setter Property="Margin" Value="3" />
+                                    <Setter Property="AutoGenerateColumns" Value="False" />
+                                    <Setter Property="HorizontalGridLinesBrush" Value="DimGray" />
+                                    <Setter Property="VerticalGridLinesBrush" Value="Gray" />
+                                    <Setter Property="CanUserAddRows" Value="False" />
+                                    <Setter Property="CanUserDeleteRows" Value="False" />
+                                    <Setter Property="CanUserReorderColumns" Value="False" />
+                                    <Setter Property="CanUserResizeColumns" Value="False" />
+                                    <Setter Property="CanUserResizeRows" Value="False" />
+                                    <Setter Property="CanUserSortColumns" Value="False" />
+                                    <Setter Property="HeadersVisibility" Value="Column" />
+                                    <Setter Property="BorderBrush" Value="Black" />
+                                    <Setter Property="BorderThickness" Value="1" />
+                                </Style>
+                            </Grid.Resources>
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.5*" />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <!-- All users -->
+                            <!--                            <Border Grid.Column="0" Style="{StaticResource DataGirdBorder}">-->
+                            <DataGrid ItemsSource="{Binding AllUsers}">
+
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="Имя" HorizontalAlignment="Stretch" />
+                                            </DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Width="90" Binding="{Binding Mark}">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="Баллы"
+                                                               HorizontalAlignment="Stretch" />
+                                                    <Button Width="16" Height="16" FontSize="9" Padding="0,0,0,0"
+                                                            Margin="6,0,0,0" Content="1" HorizontalAlignment="Center"
+                                                            Command="{Binding DataContext.SetAllUsersMarksCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="1" />
+                                                    <Button Width="16" Height="16" FontSize="9" Padding="0,0,0,0"
+                                                            Margin="4,0,0,0" Content="2" HorizontalAlignment="Center"
+                                                            Command="{Binding DataContext.SetAllUsersMarksCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="2" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="3,0" Orientation="Horizontal">
+                                <Button Height="24" Width="24" Margin="3" Padding="0">
+                                    <Button.Content>
+                                        <Image Source="/Resources/icons/copy16.png" Stretch="None" />
+                                    </Button.Content>
+                                </Button>
+                                <Button Height="24" Width="24" Margin="3,0">
+                                    <Button.Content>
+                                        <Image Source="/Resources/icons/deletesmall16.png" Stretch="None" />
+                                    </Button.Content>
+                                </Button>
+                                <Button Height="24" Width="24" Margin="3,0">
+                                    <Button.Content>
+                                        <Image Source="/Resources/icons/undo16.png" Stretch="None" />
+                                    </Button.Content>
+                                </Button>
+                            </StackPanel>
+
+                            <!-- All voted users -->
+                            <DataGrid Grid.Row="0" Grid.Column="1" ItemsSource="{Binding VotedUsers}">
+
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="Все проголосовавшие"
+                                                           HorizontalAlignment="Stretch" />
+                                            </DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="3,0" Orientation="Horizontal">
+                                <Button Height="24" Width="24" Margin="3">
+                                    <Button.Content>
+                                        <Image Source="/Resources/icons/copy16.png" Stretch="None" />
+                                    </Button.Content>
+                                </Button>
+                            </StackPanel>
+
+                            <!-- All users with vote and feedback -->
+                            <DataGrid Grid.Row="0" Grid.Column="2" ItemsSource="{Binding UsersWithVoteAndFeedback}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="Голос + фидбек"
+                                                           HorizontalAlignment="Stretch" />
+                                            </DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <StackPanel Grid.Row="1" Grid.Column="2" Margin="3,0" Orientation="Horizontal">
+                                <Button Height="24" Width="24" Margin="3">
+                                    <Button.Content>
+                                        <Image Source="/Resources/icons/copy16.png" Stretch="None" />
+                                    </Button.Content>
+                                </Button>
+                            </StackPanel>
+
+                            <!-- All users with vote only -->
+                            <DataGrid Grid.Row="0" Grid.Column="3" ItemsSource="{Binding UsersWithVoteOnly}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="Только голос"
+                                                           HorizontalAlignment="Stretch" />
+                                            </DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <StackPanel Grid.Row="1" Grid.Column="3" Margin="3,0" Orientation="Horizontal">
+                                <Button Height="24" Width="24" Margin="3">
+                                    <Button.Content>
+                                        <Image Source="/Resources/icons/copy16.png" Stretch="None" />
+                                    </Button.Content>
+                                </Button>
+                            </StackPanel>
+
+                            <!-- All users with feedback only -->
+                            <DataGrid Grid.Row="0" Grid.Column="4" ItemsSource="{Binding UsersWithFeedbackOnly}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="Фидбек без голоса"
+                                                           HorizontalAlignment="Stretch" />
+                                            </DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <StackPanel Grid.Row="1" Grid.Column="4" Margin="3,0" Orientation="Horizontal">
+                                <Button Height="24" Width="24" Margin="3">
+                                    <Button.Content>
+                                        <Image Source="/Resources/icons/copy16.png" Stretch="None" />
+                                    </Button.Content>
+                                </Button>
+                            </StackPanel>
+
+                        </Grid>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Графики голосования">
+                    <Border Padding="8">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center" Margin="0,0,5,0">Шаблон:</TextBlock>
+                            <Button Padding="6,2" Margin="3" Content="Загрузить..." />
+                            <Button Padding="6,2" Margin="3" Content="Сохранить..." />
+                            <Button Padding="6,2" Margin="3" Content="Редактировать..." Command="{Binding EditTemplateCommand}"/>
+                            <TextBlock VerticalAlignment="Center" Margin="5,0,5,0">Графики:</TextBlock>
+                            <Button Padding="6,2" Margin="3" Content="Сохранить..." />
+                        </StackPanel>
+                        <TextBlock Grid.Row="1">{Template state}</TextBlock>
+                        <Grid Grid.Row="2" Margin="0,12,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"></RowDefinition>
+                                <RowDefinition></RowDefinition>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Результат применения шаблона"></TextBlock>
+                        </Grid>
+                    </Grid>
+                    </Border>
+                </TabItem>
+            </TabControl>
+        </Grid>
+
+        <Border Grid.Row="2">
+            <Border.Resources>
+                <converters:BoolConverter x:Key="LogTextBoxVisibilityConverter" True="Visible" False="Collapsed" />
+                <converters:BoolConverter x:Key="LogLineVisibilityConverter" True="Collapsed" False="Visible" />
+            </Border.Resources>
+            <StackPanel>
+                <ToggleButton Name="LogDisplayModeToggle" Content="Лог"
+                              Template="{StaticResource ExpanderToggleButton}" IsChecked="True" />
+                <ListBox ItemsSource="{Binding Logger.Entries}"
+                         HorizontalContentAlignment="Stretch" Height="128"
+                         Visibility="{Binding ElementName=LogDisplayModeToggle, Path=IsChecked, Converter={StaticResource LogTextBoxVisibilityConverter}}"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.IsContainerVirtualizable="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling"
+                         VirtualizingPanel.CacheLength="100">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="logging:LogEntryBase">
+                            <TextBlock FontFamily="Consolas" FontStretch="Condensed"
+                                       Text="{Binding Message, Mode=OneTime}" FontSize="11" Margin="0,0,0,0" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </Border>
+    </Grid>
+</views:ViewBase>
