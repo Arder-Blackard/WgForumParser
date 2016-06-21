@@ -1,0 +1,80 @@
+﻿<UserControl x:Class="ForumParserWPF.Views.Controls.PollQuestionChart"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:windows="clr-namespace:ForumParserWPF.ViewModels.Windows"
+             xmlns:converters="clr-namespace:ForumParserWPF.Views.Converters"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance d:Type=windows:PollQuestionChartViewModel, d:IsDesignTimeCreatable=True}"
+             d:DesignHeight="280" d:DesignWidth="640">
+    <DockPanel>
+        <DockPanel.Resources>
+            <converters:RatioConverter x:Key="RelativeWidthConverter" />
+        </DockPanel.Resources>
+        <TextBlock DockPanel.Dock="Top"
+                   Text="{Binding Text}"
+                   Padding="3"
+                   HorizontalAlignment="Stretch"
+                   Background="#C8D6E6" />
+        <Border Background="White" Padding="10">
+            <StackPanel>
+                <Grid>
+                    <Border BorderThickness="1" BorderBrush="#D1D8DE" Background="#EFF7FE" Margin="0,0,0,4" />
+                    <UniformGrid Columns="11" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Border BorderThickness="1" BorderBrush="#D1D8DE" Width="1" HorizontalAlignment="Left" />
+                        <Border BorderThickness="1" BorderBrush="#D1D8DE" Width="1" HorizontalAlignment="Left" />
+                        <Border BorderThickness="1" BorderBrush="#D1D8DE" Width="1" HorizontalAlignment="Left" />
+                        <Border BorderThickness="1" BorderBrush="#D1D8DE" Width="1" HorizontalAlignment="Left" />
+                        <Border BorderThickness="1" BorderBrush="#D1D8DE" Width="1" HorizontalAlignment="Left" />
+                        <Border BorderThickness="1" BorderBrush="#D1D8DE" Width="1" HorizontalAlignment="Left" />
+                        <Border BorderThickness="1" BorderBrush="#D1D8DE" Width="1" HorizontalAlignment="Left" />
+                        <Border BorderThickness="1" BorderBrush="#D1D8DE" Width="1" HorizontalAlignment="Left" />
+                        <Border BorderThickness="1" BorderBrush="#D1D8DE" Width="1" HorizontalAlignment="Left" />
+                        <Border BorderThickness="1" BorderBrush="#D1D8DE" Width="1" HorizontalAlignment="Left" />
+                        <Border BorderThickness="1" BorderBrush="#D1D8DE" Width="1" HorizontalAlignment="Left" />
+                    </UniformGrid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="10*" />
+                            <ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
+                        <ItemsControl ItemsSource="{Binding Answers}" Margin="0,0,0,16">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,4,0,0">
+                                        <TextBlock Text="{Binding Text}" Margin="4,1" />
+                                        <DockPanel Height="11">
+                                            <Border DockPanel.Dock="Left" BorderThickness="1" BorderBrush="#39618D" Background="#3F6B9E" VerticalAlignment="Stretch">
+                                                <Border.Width>
+                                                    <MultiBinding Converter="{StaticResource RelativeWidthConverter}" FallbackValue="0">
+                                                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=DockPanel}"/>
+                                                        <Binding Path="FilledBarWidth" />
+                                                    </MultiBinding>
+                                                </Border.Width>
+                                            </Border>
+                                            <Border BorderThickness="1" BorderBrush="#A8A8A8" Background="White" />
+                                        </DockPanel>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </Grid>
+                <UniformGrid Columns="11" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Rows="2" Margin="-6,0,6,0">
+                    <TextBlock Text=" 0" />
+                    <TextBlock Text="10" />
+                    <TextBlock Text="20" />
+                    <TextBlock Text="30" />
+                    <TextBlock Text="40" />
+                    <TextBlock Text="50" />
+                    <TextBlock Text="60" />
+                    <TextBlock Text="70" />
+                    <TextBlock Text="80" />
+                    <TextBlock Text="90" />
+                    <TextBlock Text="100" />
+                </UniformGrid>
+            </StackPanel>
+        </Border>
+    </DockPanel>
+</UserControl>

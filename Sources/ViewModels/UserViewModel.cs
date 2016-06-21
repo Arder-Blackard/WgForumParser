@@ -28,6 +28,18 @@ namespace ForumParserWPF.ViewModels
             }
         }
 
+        public bool IsDeleted
+        {
+            get { return User.IsDeleted; }
+            set
+            {
+                if ( User.IsDeleted == value )
+                    return;
+                User.IsDeleted = value;
+                OnPropertyChanged();
+            }
+        }
+
         public bool HasVote => User.HasVote;
         public bool HasVoteAndFeedback => User.HasVote && User.HasFeedback;
         public bool HasVoteOnly => User.HasVote && !User.HasFeedback;

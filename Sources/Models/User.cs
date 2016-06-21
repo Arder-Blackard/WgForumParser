@@ -12,6 +12,7 @@
         public bool HasDeletedFeedback { get; set; }
         public bool HasDeletedPost { get; set; }
         public int Mark { get; set; }
+        public bool IsDeleted { get; set; }
 
         #endregion
 

@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -9,6 +9,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using ForumParserWPF.Models;
 using ForumParserWPF.Services;
+using WpfCommon.Commands;
 using WpfCommon.ViewModels.Base;
 
 namespace ForumParserWPF.ViewModels.Windows
@@ -18,19 +19,19 @@ namespace ForumParserWPF.ViewModels.Windows
         #region Constants
 
         public static readonly DependencyProperty TopicUrlProperty =
-            DependencyProperty.Register( "TopicUrl", typeof( string ), typeof( MainWindowViewModel ), new PropertyMetadata( default(string) ) );
+            DependencyProperty.Register( "TopicUrl", typeof (string), typeof (MainWindowViewModel), new PropertyMetadata( default(string) ) );
 
         public static readonly DependencyProperty ExcludeAdministratorsProperty = DependencyProperty.Register(
-            "ExcludeAdministrators", typeof( bool ), typeof( MainWindowViewModel ), new PropertyMetadata( default(bool) ) );
+            "ExcludeAdministrators", typeof (bool), typeof (MainWindowViewModel), new PropertyMetadata( default(bool) ) );
 
         public static readonly DependencyProperty ExcludeCoordinatorsProperty = DependencyProperty.Register(
-            "ExcludeCoordinators", typeof( bool ), typeof( MainWindowViewModel ), new PropertyMetadata( default(bool) ) );
+            "ExcludeCoordinators", typeof (bool), typeof (MainWindowViewModel), new PropertyMetadata( default(bool) ) );
 
         public static readonly DependencyProperty ExcludeDeletedMessagesProperty = DependencyProperty.Register(
-            "ExcludeDeletedMessages", typeof( bool ), typeof( MainWindowViewModel ), new PropertyMetadata( default(bool) ) );
+            "ExcludeDeletedMessages", typeof (bool), typeof (MainWindowViewModel), new PropertyMetadata( default(bool) ) );
 
         public static readonly DependencyProperty ParsePollOnlyProperty = DependencyProperty.Register(
-            "ParsePollOnly", typeof( bool ), typeof( MainWindowViewModel ), new PropertyMetadata( default(bool) ) );
+            "ParsePollOnly", typeof (bool), typeof (MainWindowViewModel), new PropertyMetadata( default(bool) ) );
 
         #endregion
 
@@ -42,6 +43,7 @@ namespace ForumParserWPF.ViewModels.Windows
         private readonly IViewProvider _viewProvider;
         private ICollectionView _allUsers;
         private ForumTopic _forumTopic;
+        private UserViewModel _selectedUser;
         private ObservableCollection<UserViewModel> _users;
         private ICollectionView _usersWithFeedbackOnly;
         private ICollectionView _usersWithVoteAndFeedback;
@@ -54,7 +56,7 @@ namespace ForumParserWPF.ViewModels.Windows
 
         #region Auto-properties
 
-        public string SessionId { get; set; } = "000000000040000138790088ad58e1f3863ad81f277e1bf9e48be2";
+        public string SessionId { get; set; } 
 
         public WpfLogger Logger { get; set; } = new WpfLogger();
 
@@ -63,10 +65,20 @@ namespace ForumParserWPF.ViewModels.Windows
 
         #region Properties
 
+        public UserViewModel SelectedUser
+        {
+            get { return _selectedUser; }
+            set { SetValue( ref _selectedUser, value ); }
+        }
+
         public ForumTopic ForumTopic
         {
             get { return _forumTopic; }
-            private set { SetValue( ref _forumTopic, value ); }
+            private set
+            {
+                if ( SetValue( ref _forumTopic, value ) )
+                    SetUsers( _forumTopic.Users );
+            }
         }
 
         public ICollectionView AllUsers
@@ -134,6 +146,120 @@ namespace ForumParserWPF.ViewModels.Windows
         #endregion
 
 
+        #region Initialization
+
+        public MainWindowViewModel( IViewProvider viewProvider, ForumParser forumParser )
+        {
+            _viewProvider = viewProvider;
+            _forumParser = forumParser;
+            LoginCommand = new AsyncDelegateCommand( LoginCommandHandler );
+            SaveIntermediateResultCommand = new DelegateCommand( SaveIntermediateResultCommandHandler );
+            LoadIntermediateResultCommand = new AsyncDelegateCommand( LoadIntermediateResultCommandHandler );
+            SetAllUsersMarksCommand = new DelegateCommand<int>( SetAllUsersMarksCommandHandler );
+            EditTemplateCommand = new DelegateCommand( EditTemplateCommandHandler );
+            CopyTableContentCommand = new DelegateCommand<IEnumerable>( CopyTableContentCommandHandler );
+            DeleteSelectedUserCommand = new DelegateCommand( DeleteSelectedUserCommandHandler );
+
+            TopicUrl = "http://supertest.worldoftanks.com/index.php?/topic/8281-тестирование-карты-112-eiffeltower-стандартный-бой/";
+        }
+
+        #endregion
+
+
+        #region Non-public methods
+
+        private void DeleteSelectedUserCommandHandler()
+        {
+            if ( SelectedUser == null )
+                return;
+
+            SelectedUser.IsDeleted = true;
+            SelectedUser = FindNextSelectedUser();
+
+            AllUsers.Refresh();
+            VotedUsers.Refresh();
+            UsersWithVoteAndFeedback.Refresh();
+            UsersWithVoteOnly.Refresh();
+            UsersWithFeedbackOnly.Refresh();
+        }
+
+        private UserViewModel FindNextSelectedUser()
+        {
+            var isSelectedUserFound = false;
+            var newSelectedUser = (UserViewModel) null;
+            foreach ( var user in _users )
+            {
+                if ( user == SelectedUser )
+                    isSelectedUserFound = true;
+                else if ( !user.IsDeleted )
+                {
+                    newSelectedUser = user;
+                    if ( isSelectedUserFound )
+                        break;
+                }
+            }
+            return newSelectedUser;
+        }
+
+        private void UpdateUsers()
+        {
+        }
+
+        private void CopyTableContentCommandHandler( IEnumerable users )
+        {
+            var content = users.OfType<UserViewModel>()
+                               .Select( user => $"{user.Name}\t{user.Mark}\r\n" );
+
+            Clipboard.SetText( string.Concat( content ) );
+        }
+
+        private void SetUsers( IEnumerable<User> users )
+        {
+            _users = new ObservableCollection<UserViewModel>( users.Select( user => new UserViewModel( user ) ) );
+            RecreateFilters();
+        }
+
+        private void RecreateFilters()
+        {
+            AllUsers = CollectionViewSource.GetDefaultView( _users );
+            AllUsers.Filter = u =>
+            {
+                var user = (UserViewModel) u;
+                return !user.IsDeleted;
+            };
+
+            VotedUsers = new CollectionViewSource { Source = _users }.View;
+            VotedUsers.Filter = u =>
+            {
+                var user = (UserViewModel) u;
+                return !user.IsDeleted && user.HasVote;
+            };
+
+            UsersWithVoteAndFeedback = new CollectionViewSource { Source = _users }.View;
+            UsersWithVoteAndFeedback.Filter = u =>
+            {
+                var user = (UserViewModel) u;
+                return !user.IsDeleted && user.HasVoteAndFeedback;
+            };
+
+            UsersWithVoteOnly = new CollectionViewSource { Source = _users }.View;
+            UsersWithVoteOnly.Filter = u =>
+            {
+                var user = (UserViewModel) u;
+                return !user.IsDeleted && user.HasVoteOnly;
+            };
+
+            UsersWithFeedbackOnly = new CollectionViewSource { Source = _users }.View;
+            UsersWithFeedbackOnly.Filter = u =>
+            {
+                var user = (UserViewModel) u;
+                return !user.IsDeleted && user.HasFeedbackOnly;
+            };
+        }
+
+        #endregion
+
+
         #region Commands
 
         public ICommand EditTemplateCommand { get; }
@@ -142,13 +268,27 @@ namespace ForumParserWPF.ViewModels.Windows
         public ICommand LoginCommand { get; }
         public ICommand SaveIntermediateResultCommand { get; }
         public ICommand SetAllUsersMarksCommand { get; }
+        public ICommand CopyTableContentCommand { get; }
+        public ICommand DeleteSelectedUserCommand { get; }
 
-        private Task LoadIntermediateResultCommandHandler( object arg )
+        private void EditTemplateCommandHandler()
+        {
+            try
+            {
+                _viewProvider.Show<TemplateEditorViewModel>( this, viewModel => viewModel.ForumTopic = ForumTopic );
+            }
+            catch
+            {
+                //  Do nothing
+            }
+        }
+
+        private Task LoadIntermediateResultCommandHandler()
         {
             return Task.CompletedTask;
         }
 
-        private async Task LoginCommandHandler( object o )
+        private async Task LoginCommandHandler()
         {
             if ( SessionId == null )
             {
@@ -171,89 +311,16 @@ namespace ForumParserWPF.ViewModels.Windows
                     SkipDeleted = true
                 },
                 logger: Logger );
-
-            SetUsers( ForumTopic.Users );
         }
 
-        private Task SaveIntermediateResultCommandHandler( object arg )
+        private void SaveIntermediateResultCommandHandler()
         {
-            return Task.CompletedTask;
         }
 
-        private Task SetAllUsersMarksCommandHandler( object arg )
+        private void SetAllUsersMarksCommandHandler( int mark )
         {
-            try
-            {
-                var mark = Convert.ToInt32( arg );
-                foreach ( var user in _users )
-                    user.Mark = mark;
-            }
-            catch
-            {
-                //  Do nothing
-            }
-
-            return Task.CompletedTask;
-        }
-
-        private Task EditTemplateCommandHandler( object arg )
-        {
-            try
-            {
-                _viewProvider.Show<TemplateEditorViewModel>( this, viewModel => viewModel.ForumTopic = ForumTopic );
-            }
-            catch
-            {
-                //  Do nothing
-            }
-
-            return Task.CompletedTask;
-        }
-
-        #endregion
-
-
-        #region Initialization
-
-        public MainWindowViewModel( IViewProvider viewProvider, ForumParser forumParser )
-        {
-            _viewProvider = viewProvider;
-            _forumParser = forumParser;
-            LoginCommand = new AsyncDelegateCommand( LoginCommandHandler );
-            SaveIntermediateResultCommand = new AsyncDelegateCommand( SaveIntermediateResultCommandHandler );
-            LoadIntermediateResultCommand = new AsyncDelegateCommand( LoadIntermediateResultCommandHandler );
-            SetAllUsersMarksCommand = new AsyncDelegateCommand( SetAllUsersMarksCommandHandler );
-            EditTemplateCommand = new AsyncDelegateCommand( EditTemplateCommandHandler );
-
-            TopicUrl = "http://supertest.worldoftanks.com/index.php?/topic/8281-тестирование-карты-112-eiffeltower-стандартный-бой/";
-        }
-
-        #endregion
-
-
-        #region Non-public methods
-
-        private void SetUsers( IEnumerable<User> users )
-        {
-            _users = new ObservableCollection<UserViewModel>( users.Select( user => new UserViewModel( user ) ) );
-            UpdateFilters();
-        }
-
-        private void UpdateFilters()
-        {
-            AllUsers = CollectionViewSource.GetDefaultView( _users );
-
-            VotedUsers = new CollectionViewSource { Source = _users }.View;
-            VotedUsers.Filter = u => (u as UserViewModel)?.HasVote == true;
-
-            UsersWithVoteAndFeedback = new CollectionViewSource { Source = _users }.View;
-            UsersWithVoteAndFeedback.Filter = u => (u as UserViewModel)?.HasVoteAndFeedback == true;
-
-            UsersWithFeedbackOnly = new CollectionViewSource { Source = _users }.View;
-            UsersWithFeedbackOnly.Filter = u => (u as UserViewModel)?.HasVoteOnly == true;
-
-            UsersWithVoteOnly = new CollectionViewSource { Source = _users }.View;
-            UsersWithVoteOnly.Filter = u => (u as UserViewModel)?.HasFeedbackOnly == true;
+            foreach ( var user in _users )
+                user.Mark = mark;
         }
 
         #endregion

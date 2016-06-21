@@ -159,7 +159,7 @@
                                 <Style TargetType="{x:Type ListView}">
                                     <Setter Property="Margin" Value="0" />
                                 </Style>
-                                <Style x:Key="DataGirdBorder" TargetType="Border">
+                                <Style x:Key="DataGridBorder" TargetType="Border">
                                     <Setter Property="Margin" Value="3" />
                                     <Setter Property="Padding" Value="0" />
                                     <Setter Property="BorderBrush" Value="Black" />
@@ -196,8 +196,8 @@
                             </Grid.RowDefinitions>
                             <!-- All users -->
                             <!--                            <Border Grid.Column="0" Style="{StaticResource DataGirdBorder}">-->
-                            <DataGrid ItemsSource="{Binding AllUsers}">
-
+                            <DataGrid x:Name="UsersGrid" ItemsSource="{Binding AllUsers}" SelectedItem="{Binding SelectedUser}" 
+                                      PreviewKeyDown="UsersGrid_PreviewKeyDown">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
                                         <DataGridTextColumn.HeaderTemplate>
@@ -228,12 +228,14 @@
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="3,0" Orientation="Horizontal">
-                                <Button Height="24" Width="24" Margin="3" Padding="0">
+                                <Button Height="24" Width="24" Margin="3" Padding="0" 
+                                        Command="{Binding CopyTableContentCommand}" CommandParameter="{Binding AllUsers}">
                                     <Button.Content>
-                                        <Image Source="/Resources/icons/copy16.png" Stretch="None" />
+                                        <Image Source="/Resources/icons/copy16.png" Stretch="None"/>
                                     </Button.Content>
                                 </Button>
-                                <Button Height="24" Width="24" Margin="3,0">
+                                <Button Height="24" Width="24" Margin="3,0"
+                                        Command="{Binding DeleteSelectedUserCommand}">
                                     <Button.Content>
                                         <Image Source="/Resources/icons/deletesmall16.png" Stretch="None" />
                                     </Button.Content>
@@ -244,7 +246,7 @@
                                     </Button.Content>
                                 </Button>
                             </StackPanel>
-
+                            
                             <!-- All voted users -->
                             <DataGrid Grid.Row="0" Grid.Column="1" ItemsSource="{Binding VotedUsers}">
 
@@ -261,7 +263,8 @@
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" Grid.Column="1" Margin="3,0" Orientation="Horizontal">
-                                <Button Height="24" Width="24" Margin="3">
+                                <Button Height="24" Width="24" Margin="3" 
+                                        Command="{Binding CopyTableContentCommand}" CommandParameter="{Binding VotedUsers}">
                                     <Button.Content>
                                         <Image Source="/Resources/icons/copy16.png" Stretch="None" />
                                     </Button.Content>
@@ -283,7 +286,8 @@
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" Grid.Column="2" Margin="3,0" Orientation="Horizontal">
-                                <Button Height="24" Width="24" Margin="3">
+                                <Button Height="24" Width="24" Margin="3" 
+                                        Command="{Binding CopyTableContentCommand}" CommandParameter="{Binding UsersWithVoteAndFeedback}">
                                     <Button.Content>
                                         <Image Source="/Resources/icons/copy16.png" Stretch="None" />
                                     </Button.Content>
@@ -305,7 +309,8 @@
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" Grid.Column="3" Margin="3,0" Orientation="Horizontal">
-                                <Button Height="24" Width="24" Margin="3">
+                                <Button Height="24" Width="24" Margin="3" 
+                                        Command="{Binding CopyTableContentCommand}" CommandParameter="{Binding UsersWithVoteOnly}">
                                     <Button.Content>
                                         <Image Source="/Resources/icons/copy16.png" Stretch="None" />
                                     </Button.Content>
@@ -327,7 +332,8 @@
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" Grid.Column="4" Margin="3,0" Orientation="Horizontal">
-                                <Button Height="24" Width="24" Margin="3">
+                                <Button Height="24" Width="24" Margin="3"  
+                                        Command="{Binding CopyTableContentCommand}" CommandParameter="{Binding UsersWithFeedbackOnly}">
                                     <Button.Content>
                                         <Image Source="/Resources/icons/copy16.png" Stretch="None" />
                                     </Button.Content>

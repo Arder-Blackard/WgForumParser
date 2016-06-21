@@ -99,6 +99,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -123,6 +124,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Sources\ViewModels\Windows\PollQuestionChartViewModel.cs" />
+    <Compile Include="Sources\Views\Controls\HotspotContainer.cs" />
+    <Compile Include="Sources\Views\Converters\ColumnColorConverter.cs" />
     <Compile Include="Sources\CompositionRoot\ViewProvider.cs" />
     <Compile Include="Sources\Exceptions\Class1.cs" />
     <Compile Include="Sources\Models\AnonymousPollAnswer.cs" />
@@ -137,25 +141,37 @@
     <Compile Include="Sources\Services\WgForumClient.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Sources\ViewModels\AsyncDelegateCommand.cs" />
     <Compile Include="Sources\ViewModels\IViewModel.cs" />
     <Compile Include="Sources\ViewModels\Windows\LoginHelperWindowViewModel.cs" />
     <Compile Include="Sources\ViewModels\Windows\MainWindowViewModel.cs" />
     <Compile Include="Sources\Services\CookieService.cs" />
     <Compile Include="Sources\ViewModels\UserViewModel.cs" />
+    <Compile Include="Sources\ViewModels\Windows\TemplateViewModel.cs" />
     <Compile Include="Sources\ViewModels\Windows\TemplateEditorViewModel.cs" />
     <Compile Include="Sources\ViewModels\WpfLogger.cs" />
     <Compile Include="Sources\Views\Behaviors\Behavior.cs" />
     <Compile Include="Sources\Views\CefHandlers\DialogHandler.cs" />
     <Compile Include="Sources\Views\CefHandlers\CefCommonHandlerProxy.cs" />
     <Compile Include="Sources\Views\Controls\CefWebBrowser.cs" />
-    <Compile Include="Sources\Views\Controls\QuestionChart.xaml.cs">
-      <DependentUpon>QuestionChart.xaml</DependentUpon>
+    <Compile Include="Sources\Views\Controls\EvenlyDistributedColumnGrid.cs" />
+    <Compile Include="Sources\Views\Controls\EvenlyDistributedRowGrid.cs" />
+    <Compile Include="Sources\Views\Controls\TemplateChart.xaml.cs">
+      <DependentUpon>TemplateChart.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Sources\Views\Controls\PollQuestionChart.xaml.cs">
+      <DependentUpon>PollQuestionChart.xaml</DependentUpon>
     </Compile>
     <Compile Include="Sources\Views\Converters\BoolConverter.cs" />
+    <Compile Include="Sources\Views\Converters\ConnectionPointConverter.cs" />
+    <Compile Include="Sources\Views\Converters\RatioConverter.cs" />
     <Compile Include="Sources\Views\Converters\WidthConverter.cs" />
+    <Compile Include="Sources\Views\Extensions\VisualExtensions.cs" />
     <Compile Include="Sources\Views\IView.cs" />
-    <Page Include="Sources\Views\Controls\QuestionChart.xaml">
+    <Page Include="Sources\Views\Controls\TemplateChart.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Sources\Views\Controls\PollQuestionChart.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -214,7 +230,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Converters\" />
+    <Folder Include="Sources\ViewModels\Controls\" />
+    <Folder Include="Views\" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\icons\copy16.png" />
     <Resource Include="Resources\icons\copy20.png" />

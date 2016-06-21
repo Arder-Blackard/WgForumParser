@@ -7,9 +7,9 @@
                 xmlns:views="clr-namespace:ForumParserWPF.Views"
                 xmlns:viewModels="clr-namespace:ForumParserWPF.ViewModels.Windows"
                 xmlns:converters="clr-namespace:ForumParserWPF.Views.Converters"
-                xmlns:logging="clr-namespace:CommonLib.Logging;assembly=CommonLib"
-                xmlns:metroChart="clr-namespace:De.TorstenMandelkow.MetroChart;assembly=De.TorstenMandelkow.MetroChart"
-                xmlns:models="clr-namespace:ForumParserWPF.Models"
+                xmlns:windows="clr-namespace:ForumParserWPF.Views.Windows"
+                xmlns:system="clr-namespace:System;assembly=mscorlib"
+                xmlns:controls="clr-namespace:ForumParserWPF.Views.Controls"
                 mc:Ignorable="d"
                 Height="800" Width="1400" MinWidth="960" MinHeight="600"
                 d:DataContext="{d:DesignInstance d:Type={x:Type viewModels:TemplateEditorViewModel}, d:IsDesignTimeCreatable=True}"
@@ -17,18 +17,14 @@
                 Background="{x:Static SystemColors.ControlBrush}">
 
     <Window.Resources>
-        <Style x:Key="ChartStyle" TargetType="metroChart:ChartBase">
-            <Setter Property="Margin" Value="0 0 10 10" />
-            <Setter Property="Background" Value="#99FFFFFF" />
-            <Setter Property="Foreground" Value="#FF666666" />
-            <Setter Property="FontFamily" Value="Segoe UI" />
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="Height" Value="400" />
-            <Setter Property="HorizontalAlignment" Value="Stretch"></Setter>
-        </Style>
+        <converters:ConnectionBreakerLocationConverter x:Key="ConnectionTopConverter" />
+        <converters:ConnectionPointConverter x:Key="ConnectionPointConverter" />
+        <system:Double x:Key="LeftOffset">2</system:Double>
+        <system:Double x:Key="LeftOffset2">50</system:Double>
+        <system:Double x:Key="RightOffset2">50</system:Double>
+        <system:Double x:Key="RightOffset">94</system:Double>
     </Window.Resources>
-    <DockPanel>
-
+    <DockPanel Background="{x:Static SystemColors.ControlBrush}">
         <Grid DockPanel.Dock="Bottom" Margin="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -43,40 +39,180 @@
                     <Setter Property="Margin" Value="3" />
                 </Style>
             </Grid.Resources>
-            <Button Grid.Column="0" Content="Справка" HorizontalAlignment="Left" />
+            <Button Grid.Column="0" Content="Справка" Margin="3,3,0,0" HorizontalAlignment="Left"
+                    VerticalAlignment="Top" />
             <Button Grid.Column="2" Content="OK" HorizontalAlignment="Left" />
             <Button Grid.Column="3" Content="Отмена" HorizontalAlignment="Left" />
         </Grid>
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />
-                <ColumnDefinition Width="120" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="100" />
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
             <GroupBox Grid.Column="0" Header="Голосование">
-                <ListView ItemsSource="{Binding ForumTopic.Poll.Questions}" HorizontalContentAlignment="Stretch">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <Border HorizontalAlignment="Stretch">
-                                <!-- Chart -->
-                                <metroChart:ClusteredBarChart
-                                    Style="{StaticResource ChartStyle}"
-                                    ChartTitle="{Binding Text}">
-                                    <metroChart:ClusteredBarChart.Series>
-                                        <metroChart:ChartSeries
-                                            Caption="Errors"
-                                            DisplayMember="Text"
-                                            ValueMember="Count"
-                                            ItemsSource="{Binding Answers}">
-                                        </metroChart:ChartSeries>
-                                    </metroChart:ClusteredBarChart.Series>
-                                </metroChart:ClusteredBarChart>
-                            </Border>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                <Border BorderBrush="Black" BorderThickness="1">
+                    <ScrollViewer Name="QuestionsScrollViewer" Background="White">
+                        <ItemsControl x:Name="QuestionsList"
+                                  ItemsSource="{Binding Questions}"
+                                  HorizontalContentAlignment="Stretch"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                  ScrollViewer.CanContentScroll="False"
+                                  VirtualizingPanel.IsVirtualizing="False"
+                                  VirtualizingPanel.IsVirtualizingWhenGrouping="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <controls:HotspotContainer Hotspot="0,0.5">
+                                        <Border HorizontalAlignment="Stretch" MouseMove="PollQuestionChart_MouseMove">
+                                            <controls:PollQuestionChart Padding="8" />
+                                        </Border>
+                                    </controls:HotspotContainer>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
             </GroupBox>
-            <GroupBox Grid.Column="2" Header="Результирующие графики" />
+            <ItemsControl Grid.Column="1" x:Name="ConnectionsBreakers"
+                          ItemsSource="{Binding Connections, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=windows:TemplateEditor} }">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Grid ClipToBounds="True" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Height="13" Width="13" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                Click="ConnectionBreaker_Click">
+                            <Button.Margin>
+                                <MultiBinding Converter="{StaticResource ConnectionTopConverter}">
+                                    <Binding Source="{StaticResource LeftOffset}" />
+                                    <Binding Path="Left.HotspotLocation" />
+                                    <Binding Path="Left" />
+                                    <Binding ElementName="ConnectionsList" />
+                                    <Binding Path="VerticalOffset" ElementName="QuestionsScrollViewer" />
+                                </MultiBinding>
+                            </Button.Margin>
+                            <Button.Content>
+                                <Path Stroke="Black" StrokeThickness="1" Data="M0,0L7,7M0,7L7,0" />
+                            </Button.Content>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <ItemsControl Grid.Column="2" x:Name="ConnectionsList"
+                          ItemsSource="{Binding Connections, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=windows:TemplateEditor} }"
+                          VirtualizingPanel.IsVirtualizing="False"
+                          VirtualizingPanel.IsVirtualizingWhenGrouping="False">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Path Stroke="#483D8A" StrokeThickness="2">
+                            <Path.Data>
+                                <PathGeometry>
+                                    <PathFigure>
+                                        <PathFigure.StartPoint>
+                                            <MultiBinding Converter="{StaticResource ConnectionPointConverter}">
+                                                <Binding Source="{StaticResource LeftOffset}" />
+                                                <Binding Path="Left.HotspotLocation" />
+                                                <Binding Path="Left" />
+                                                <Binding ElementName="ConnectionsList" />
+                                                <Binding Path="VerticalOffset" ElementName="QuestionsScrollViewer" />
+                                            </MultiBinding>
+                                        </PathFigure.StartPoint>
+                                        <BezierSegment IsStroked="True">
+                                            <BezierSegment.Point1>
+                                                <MultiBinding Converter="{StaticResource ConnectionPointConverter}">
+                                                    <Binding Source="{StaticResource LeftOffset2}" />
+                                                    <Binding Path="Left.HotspotLocation" />
+                                                    <Binding Path="Left" />
+                                                    <Binding ElementName="ConnectionsList" />
+                                                    <Binding Path="VerticalOffset" ElementName="QuestionsScrollViewer" />
+                                                </MultiBinding>
+                                            </BezierSegment.Point1>
+                                            <BezierSegment.Point2>
+                                                <MultiBinding Converter="{StaticResource ConnectionPointConverter}">
+                                                    <Binding Source="{StaticResource RightOffset2}" />
+                                                    <Binding Path="Right.HotspotLocation" />
+                                                    <Binding Path="Right" />
+                                                    <Binding ElementName="ConnectionsList" />
+                                                    <Binding Path="VerticalOffset" ElementName="ChartsScrollViewer" />
+                                                </MultiBinding>
+                                            </BezierSegment.Point2>
+                                            <BezierSegment.Point3>
+                                                <MultiBinding Converter="{StaticResource ConnectionPointConverter}">
+                                                    <Binding Source="{StaticResource RightOffset}" />
+                                                    <Binding Path="Right.HotspotLocation" />
+                                                    <Binding Path="Right" />
+                                                    <Binding ElementName="ConnectionsList" />
+                                                    <Binding Path="VerticalOffset" ElementName="ChartsScrollViewer" />
+                                                </MultiBinding>
+                                            </BezierSegment.Point3>
+                                        </BezierSegment>
+                                    </PathFigure>
+                                </PathGeometry>
+                            </Path.Data>
+                        </Path>
+
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <GroupBox Grid.Column="3" Header="Результирующие графики">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" HorizontalAlignment="Left" Margin="5">
+                        <StackPanel.Resources>
+                            <Style TargetType="TextBox">
+                                <Setter Property="MinWidth" Value="80" />
+                                <Setter Property="Height" Value="22" />
+                            </Style>
+                        </StackPanel.Resources>
+                        <StackPanel Orientation="Horizontal" Margin="4">
+                            <Label Target="{Binding ElementName=UnifiedHeightText}" Content="Ширина:"></Label>
+                            <TextBox x:Name="UnifiedWidthText" Text="{Binding UnifiedWidth}" Width="120"></TextBox>
+                            <Label Target="{Binding ElementName=UnifiedHeightText}" Content="Высота:"></Label>
+                            <TextBox x:Name="UnifiedHeightText" Text="{Binding UnifiedHeight}" Width="120"></TextBox>
+                        </StackPanel>
+                        <Button Content="Задать размер всем графикам" Command="{Binding SetEqualSizeCommand}" Margin="4"></Button>
+                    </StackPanel>
+                    <!-- Template charts -->
+                    <Border BorderBrush="Black" BorderThickness="1">
+                        <ScrollViewer Name="ChartsScrollViewer"
+                              DragEnter="ChartsPanel_DragEnter"
+                              DragOver="ChartsPanel_DragOver"
+                              Drop="ChartsPanel_Drop"
+                              AllowDrop="True"
+                              HorizontalContentAlignment="Left"
+                              HorizontalScrollBarVisibility="Disabled"
+                              CanContentScroll="False">
+                            <ItemsControl x:Name="ChartsList"
+                                  ItemsSource="{Binding Templates}"
+                                  HorizontalContentAlignment="Left">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <controls:HotspotContainer Hotspot="0,0.5" HorizontalContentAlignment="Left">
+                                            <controls:TemplateChart
+                                        HorizontalAlignment="Left"
+                                        BorderThickness="1"
+                                        Margin="4"
+                                        AllowDrop="True"
+                                        PreviewDragEnter="MergedChart_DragEnter"
+                                        PreviewDragLeave="MergedChart_DragLeave"
+                                        PreviewDragOver="MergedChart_DragOver"
+                                        Drop="MergedChart_Drop" />
+                                        </controls:HotspotContainer>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+                </DockPanel>
+            </GroupBox>
         </Grid>
     </DockPanel>
 </views:ViewBase>
