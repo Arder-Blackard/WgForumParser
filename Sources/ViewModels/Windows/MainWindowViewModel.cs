@@ -303,11 +303,20 @@ namespace ForumParserWPF.ViewModels.Windows
         private void SaveFinalResultCommandHandler()
         {
             if ( !SaveTxt && !SaveTxt )
-                _viewProvider.ShowMessageBox( this, "Не выбран ни один из форматов сохранения.", "Ошибка сохранения", MessageBoxButton.OK, MessageBoxImage.Asterisk );
+            {
+                _viewProvider.ShowMessageBox( this, "Не выбран ни один из форматов сохранения.", "Ошибка сохранения",
+                                              MessageBoxButton.OK, MessageBoxImage.Asterisk );
+                return;
+            }
 
-            var result = _viewProvider.Show<StringInputDialogViewModel>();
+            var result = _viewProvider.Show<StringInputDialogViewModel>(this, inputDialog =>
+            {
+                inputDialog.ViewTitle = "Укажите имя сохраняемых файлов (без расширения)";
+            });
+
             if ( result.Result == true )
             {
+
             }
         }
 
@@ -361,7 +370,7 @@ namespace ForumParserWPF.ViewModels.Windows
 
         #region Initialization
 
-        public MainWindowViewModel( IViewProvider viewProvider, ForumParser forumParser, ILogger logger ) : base( logger )
+        public MainWindowViewModel( IViewProvider viewProvider, ForumParser forumParser, ILogger logger ) : base( new WpfLogger() )
         {
             _viewProvider = viewProvider;
             _forumParser = forumParser;

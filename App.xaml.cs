@@ -3,6 +3,7 @@ using System.Windows;
 using CommonLib.Logging;
 using ForumParserWPF.Properties;
 using ForumParserWPF.Services;
+using ForumParserWPF.ViewModels;
 using ForumParserWPF.ViewModels.Windows;
 using ForumParserWPF.Views;
 using SimpleInjector;
@@ -55,7 +56,7 @@ namespace ForumParserWPF
             container.RegisterSingleton( () => Settings.Default );
 
             //  Common services
-            container.RegisterSingleton<ILogger>( () => new DefaultLogger( "ForumParser.log", $"ForumParser v.{assembly.GetName().Version}" ) );
+            container.RegisterSingleton<ILogger>( () => new WpfLogger() );
             container.RegisterSingleton<CookieService>();
             container.RegisterSingleton<ForumParser>();
 
