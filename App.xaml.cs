@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Windows;
 using CommonLib.Logging;
-using ForumParserWPF.CompositionRoot;
 using ForumParserWPF.Properties;
 using ForumParserWPF.Services;
 using ForumParserWPF.ViewModels.Windows;
 using ForumParserWPF.Views;
 using SimpleInjector;
+using WpfCommon.Services;
+using WpfCommon.ViewModels.Base;
+using WpfCommon.Views.Base;
 
 namespace ForumParserWPF
 {
@@ -34,7 +36,7 @@ namespace ForumParserWPF
         private void ComposeObjects( Container container )
         {
             var viewProvider = (ViewProvider) container.GetInstance<IViewProvider>();
-            Current.MainWindow = viewProvider.CreateWindow<MainWindowViewModel>();
+            Current.MainWindow = (Window)viewProvider.CreateWindow<MainWindowViewModel>();
             Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
         }
 
@@ -44,9 +46,10 @@ namespace ForumParserWPF
 
             // IoC container.
             var container = new Container();
+            container.RegisterSingleton<IServiceProvider>( container );
 
             //  View locator
-            container.RegisterSingleton<IViewProvider>( () => new ViewProvider( container ) );
+            container.RegisterSingleton<IViewProvider, ViewProvider>();
 
             //  Settings
             container.RegisterSingleton( () => Settings.Default );
@@ -58,10 +61,18 @@ namespace ForumParserWPF
 
             //  ViewModels
             container.Register<MainWindowViewModel>();
+            container.Register<LoginHelperWindowViewModel>();
+            container.Register<TemplateEditorViewModel>();
+            container.Register<StringInputDialogViewModel>();
+
+            var wpfCommonAssembly = typeof(WindowBase<>).Assembly;
+
+            //  ViewModels
+            container.RegisterCollection(typeof(IWindowViewModel), assembly, wpfCommonAssembly);
 
             //  Windows
+            container.Register(typeof(IView<>), new[] { assembly, wpfCommonAssembly });
 
-            container.Register( typeof (ViewBase<>), new[] { assembly } );
 
             container.Verify();
 

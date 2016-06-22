@@ -124,10 +124,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Sources\ViewModels\Windows\PollQuestionChartViewModel.cs" />
+    <Compile Include="Sources\ViewModels\Controls\PollQuestionChartViewModel.cs" />
+    <Compile Include="Sources\ViewModels\Windows\StringInputDialogViewModel.cs" />
     <Compile Include="Sources\Views\Controls\HotspotContainer.cs" />
     <Compile Include="Sources\Views\Converters\ColumnColorConverter.cs" />
-    <Compile Include="Sources\CompositionRoot\ViewProvider.cs" />
     <Compile Include="Sources\Exceptions\Class1.cs" />
     <Compile Include="Sources\Models\AnonymousPollAnswer.cs" />
     <Compile Include="Sources\Models\ForumTopic.cs" />
@@ -137,16 +137,14 @@
     <Compile Include="Sources\Models\PollQuestion.cs" />
     <Compile Include="Sources\Models\User.cs" />
     <Compile Include="Sources\Services\ForumParser.cs" />
-    <Compile Include="Sources\Services\IViewProvider.cs" />
     <Compile Include="Sources\Services\WgForumClient.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Sources\ViewModels\IViewModel.cs" />
     <Compile Include="Sources\ViewModels\Windows\LoginHelperWindowViewModel.cs" />
     <Compile Include="Sources\ViewModels\Windows\MainWindowViewModel.cs" />
     <Compile Include="Sources\Services\CookieService.cs" />
     <Compile Include="Sources\ViewModels\UserViewModel.cs" />
-    <Compile Include="Sources\ViewModels\Windows\TemplateViewModel.cs" />
+    <Compile Include="Sources\ViewModels\Controls\TemplateViewModel.cs" />
     <Compile Include="Sources\ViewModels\Windows\TemplateEditorViewModel.cs" />
     <Compile Include="Sources\ViewModels\WpfLogger.cs" />
     <Compile Include="Sources\Views\Behaviors\Behavior.cs" />
@@ -166,7 +164,6 @@
     <Compile Include="Sources\Views\Converters\RatioConverter.cs" />
     <Compile Include="Sources\Views\Converters\WidthConverter.cs" />
     <Compile Include="Sources\Views\Extensions\VisualExtensions.cs" />
-    <Compile Include="Sources\Views\IView.cs" />
     <Page Include="Sources\Views\Controls\TemplateChart.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -176,6 +173,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Sources\Views\Windows\LoginHelperWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Sources\Views\Windows\StringInputDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -193,6 +194,9 @@
     </Compile>
     <Compile Include="Sources\Views\Windows\LoginHelperWindow.xaml.cs">
       <DependentUpon>LoginHelperWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Sources\Views\Windows\StringInputDialog.xaml.cs">
+      <DependentUpon>StringInputDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Sources\Views\Windows\TemplateEditor.xaml.cs">
       <DependentUpon>TemplateEditor.xaml</DependentUpon>
@@ -231,9 +235,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Converters\" />
-    <Folder Include="Sources\ViewModels\Controls\" />
-    <Folder Include="Views\" />
+    <Resource Include="Resources\icons\FP.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\icons\copy16.png" />

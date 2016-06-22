@@ -11,13 +11,14 @@ using ForumParserWPF.Models;
 using ForumParserWPF.ViewModels.Windows;
 using ForumParserWPF.Views.Controls;
 using ForumParserWPF.Views.Extensions;
+using WpfCommon.Views.Base;
 
 namespace ForumParserWPF.Views.Windows
 {
     /// <summary>
     ///     Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class TemplateEditor : ViewBase<TemplateEditorViewModel>
+    public partial class TemplateEditor : WindowBase<TemplateEditorViewModel>
     {
         #region Constants
 

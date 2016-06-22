@@ -9,7 +9,7 @@ using WpfCommon.ViewModels.Base;
 
 namespace ForumParserWPF.ViewModels.Windows
 {
-    public class TemplateEditorViewModel : DependencyObjectViewModelBase, IViewModel
+    public class TemplateEditorViewModel : SimpleWindowViewModelBase
     {
         #region Fields
 

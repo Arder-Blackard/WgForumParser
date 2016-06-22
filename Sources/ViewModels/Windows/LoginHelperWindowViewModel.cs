@@ -8,7 +8,7 @@ using WpfCommon.ViewModels.Base;
 
 namespace ForumParserWPF.ViewModels.Windows
 {
-    public class LoginHelperWindowViewModel : SimpleViewModelBase, IViewModel
+    public class LoginHelperWindowViewModel : SimpleWindowViewModelBase
     {
         #region Fields
 

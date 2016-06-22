@@ -4,13 +4,14 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using ForumParserWPF.ViewModels.Windows;
 using ForumParserWPF.Views.Extensions;
+using WpfCommon.Views.Base;
 
 namespace ForumParserWPF.Views.Windows
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : ViewBase<MainWindowViewModel>
+    public partial class MainWindow : WindowBase<MainWindowViewModel>
     {
         public MainWindow( MainWindowViewModel viewModel ) : base( viewModel )
         {

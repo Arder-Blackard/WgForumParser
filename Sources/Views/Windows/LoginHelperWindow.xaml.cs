@@ -1,12 +1,13 @@
 ﻿using System.Windows;
 using ForumParserWPF.ViewModels.Windows;
+using WpfCommon.Views.Base;
 
 namespace ForumParserWPF.Views.Windows
 {
     /// <summary>
     ///     Interaction logic for LoginHelperWindow.xaml
     /// </summary>
-    public partial class LoginHelperWindow : ViewBase<LoginHelperWindowViewModel>
+    public partial class LoginHelperWindow : WindowBase<LoginHelperWindowViewModel>
     {
         #region Initialization
 
@@ -23,8 +24,6 @@ namespace ForumParserWPF.Views.Windows
         private void Hyperlink_Click( object sender, RoutedEventArgs e )
         {
             WebBrowser.Address = "http://supertest.worldoftanks.com";
-
-            //            WebBrowser.Reload();
         }
 
         private void ConfirmLogin_Click( object sender, RoutedEventArgs e )
