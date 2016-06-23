@@ -1,12 +1,16 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
+using CommonLib.Extensions;
 using CommonLib.Logging;
 using ForumParserWPF.Models;
 using ForumParserWPF.Services;
@@ -36,6 +40,8 @@ namespace ForumParserWPF.ViewModels.Windows
         public static readonly DependencyProperty ParsePollOnlyProperty = DependencyProperty.Register(
             "ParsePollOnly", typeof ( bool ), typeof ( MainWindowViewModel ), new FrameworkPropertyMetadata( default(bool) ) );
 
+        private static readonly Regex FixInvalidPathCharactersRegex = new Regex( @"[\\/\*\?\:""<>]" );
+
         #endregion
 
 
@@ -56,6 +62,8 @@ namespace ForumParserWPF.ViewModels.Windows
         private ICollectionView _usersWithVoteOnly;
         private ICollectionView _votedUsers;
 
+        private Stack<User> _deletedUsersStack = new Stack<User>();
+
         #endregion
 
 
@@ -75,6 +83,10 @@ namespace ForumParserWPF.ViewModels.Windows
         ///     True if .csv result format should be saved.
         /// </summary>
         public bool SaveCsv { get; set; }
+
+        public ILogger UiLogger { get; } 
+
+        public string FinalResultsDirectory { get; set; }
 
         #endregion
 
@@ -218,23 +230,25 @@ namespace ForumParserWPF.ViewModels.Windows
         public ICommand UndoDeleteUserCommand { get; }
 
         /// <summary>
-        ///     Copies the content of the passed users
+        ///     Copies the content of the passed users along with their marks to clipboard.
         /// </summary>
-        /// <param name="users"></param>
+        /// <param name="users">Users enumeration.</param>
         private void CopyUsersWithMarksCommandHandler( IEnumerable users )
         {
-            var content = users.OfType<UserViewModel>()
-                               .Select( user => $"{user.Name}\t{user.Mark}\r\n" );
-
-            Clipboard.SetText( string.Concat( content ) );
+            Execute( () =>
+            {
+                var content = users.OfType<UserViewModel>().Select( user => $"{user.Name}\t{user.Mark}" ).JoinToString( "\r\n" );
+                Clipboard.SetText( content );
+            } );
         }
 
         private void CopyUsersWithoutMarksCommandHandler( IEnumerable users )
         {
-            var content = users.OfType<UserViewModel>()
-                               .Select( user => $"{user.Name}\r\n" );
-
-            Clipboard.SetText( string.Concat( content ) );
+            Execute( () =>
+            {
+                var content = users.OfType<UserViewModel>().Select( user => user.Name ).JoinToString( "\r\n" );
+                Clipboard.SetText( content );
+            } );
         }
 
         private void DeleteSelectedUserCommandHandler()
@@ -243,8 +257,14 @@ namespace ForumParserWPF.ViewModels.Windows
                 return;
 
             SelectedUser.IsDeleted = true;
+            _deletedUsersStack.Push( SelectedUser.User );
             SelectedUser = FindNextSelectedUser();
 
+            RefreshUsers();
+        }
+
+        private void RefreshUsers()
+        {
             AllUsers.Refresh();
             VotedUsers.Refresh();
             UsersWithVoteAndFeedback.Refresh();
@@ -280,7 +300,7 @@ namespace ForumParserWPF.ViewModels.Windows
                 SessionId = login.ViewModel.SessionId;
             }
 
-            await ExecuteTask( async () =>
+            await ExecuteAsync( async () =>
             {
                 ForumTopic = await _forumParser.Parse(
                     TopicUrl,
@@ -302,26 +322,40 @@ namespace ForumParserWPF.ViewModels.Windows
         /// </summary>
         private void SaveFinalResultCommandHandler()
         {
-            if ( !SaveTxt && !SaveTxt )
+            Execute( () =>
             {
-                _viewProvider.ShowMessageBox( this, "Не выбран ни один из форматов сохранения.", "Ошибка сохранения",
-                                              MessageBoxButton.OK, MessageBoxImage.Asterisk );
-                return;
-            }
+                if ( !SaveTxt && !SaveTxt )
+                {
+                    _viewProvider.ShowMessageBox( this, "Не выбран ни один из форматов сохранения.", "Ошибка сохранения",
+                                                  MessageBoxButton.OK, MessageBoxImage.Asterisk );
+                    return;
+                }
 
-            var result = _viewProvider.Show<StringInputDialogViewModel>(this, inputDialog =>
-            {
-                inputDialog.ViewTitle = "Укажите имя сохраняемых файлов (без расширения)";
-            });
+                //  Get files name
+                var fileNameResult = _viewProvider.Show<StringInputDialogViewModel>( this, inputDialog =>
+                {
+                    inputDialog.ViewTitle = "Укажите имя сохраняемых файлов";
+                    inputDialog.Description =
+                        "Укажите имя сохраняемых файлов (без расширения).\nСуществующие файлы будут заменены.\nНедопустимые символы в имени (\\/*?:\"<>) будут заменены на _.";
+                    inputDialog.StringInput = FixInvalidPathCharactersRegex.Replace( ForumTopic.Name, "_" );
+                } );
 
-            if ( result.Result == true )
-            {
+                if ( fileNameResult.Result != true )
+                    return;
 
-            }
-        }
+                var directoryName = _viewProvider.QueryDirectoryName( this, FinalResultsDirectory );
+                if ( directoryName == null )
+                    return;
 
-        private void SaveIntermediateResultCommandHandler()
-        {
+                FinalResultsDirectory = directoryName;
+
+                var fileName = FixInvalidPathCharactersRegex.Replace( fileNameResult.ViewModel.StringInput, "_" );
+
+                if ( SaveCsv )
+                    WriteCsvFile( Path.Combine( FinalResultsDirectory, fileName + ".csv" ) );
+                if ( SaveTxt )
+                    WriteTxtFile( ForumTopic.Name, Path.Combine( FinalResultsDirectory, fileName + ".txt" ) );
+            } );
         }
 
         private void SetAllUsersMarksCommandHandler( int mark )
@@ -330,14 +364,33 @@ namespace ForumParserWPF.ViewModels.Windows
                 user.Mark = mark;
         }
 
+        private void SaveIntermediateResultCommandHandler()
+        {
+            
+        }
+
         private void UndoDeleteUserCommandHandler()
         {
+            if ( _deletedUsersStack.Count == 0 )
+                return;
+
+            _deletedUsersStack.Pop().IsDeleted = false;
+            RefreshUsers();
         }
 
         #endregion
 
 
         #region Events and invocation
+
+        /// <summary>
+        ///     Override this method to process unhandled exceptions thrown from executing task.
+        /// </summary>
+        /// <param name="exception">The exception thrown.</param>
+        protected override void OnTaskFailed( Exception exception )
+        {
+            _viewProvider.ShowMessageBox( this, exception.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error );
+        }
 
         /// <summary>
         ///     Called when the associated view has been just created.
@@ -370,8 +423,9 @@ namespace ForumParserWPF.ViewModels.Windows
 
         #region Initialization
 
-        public MainWindowViewModel( IViewProvider viewProvider, ForumParser forumParser, ILogger logger ) : base( new WpfLogger() )
+        public MainWindowViewModel( IViewProvider viewProvider, ForumParser forumParser, ILogger logger ) : base( logger )
         {
+            UiLogger = logger;
             _viewProvider = viewProvider;
             _forumParser = forumParser;
             LoginCommand = new AsyncDelegateCommand( LoginCommandHandler );
@@ -392,6 +446,52 @@ namespace ForumParserWPF.ViewModels.Windows
 
 
         #region Non-public methods
+
+        private void Execute( Action action )
+        {
+            try
+            {
+                action();
+            }
+            catch ( OperationCanceledException )
+            {
+                UiLogger.Warning( "The task has been cancelled" );
+            }
+            catch ( Exception ex )
+            {
+                UiLogger.Error( "Unhandled exception", ex );
+                OnTaskFailed( ex );
+            }
+        }
+
+        private void WriteCsvFile( string filePath )
+        {
+            try
+            {
+                Logger.Info( $"Сохранение результатов в файл '{filePath}'" );
+                var content = ForumTopic.Users.Where( user => !user.IsDeleted ).Select( user => $"{user.Name};{user.Mark}" ).JoinToString( "\r\n" );
+                File.WriteAllText( filePath, content );
+            }
+            catch ( IOException ex )
+            {
+                Logger.Error( $"Ошибка при сохранении CSV-файла '{filePath}'", ex );
+            }
+        }
+
+        private void WriteTxtFile( string topicName, string filePath )
+        {
+            try
+            {
+                Logger.Info( $"Сохранение результатов в файл '{filePath}'" );
+                var content = topicName.AppendSequence( ForumTopic.Users.Where( user => !user.IsDeleted ).Select( user => $"{user.Name} {user.Mark}" ) )
+                                       .JoinToString( "\r\n" );
+                File.WriteAllText( filePath, content );
+            }
+            catch ( IOException ex )
+            {
+                Logger.Error( $"Ошибка при сохранении TXT-файла '{filePath}'", ex );
+            }
+        }
 
         private UserViewModel FindNextSelectedUser()
         {

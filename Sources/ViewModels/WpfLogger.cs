@@ -1,4 +1,6 @@
 ﻿using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Threading;
 using CommonLib.Logging;
 
 namespace ForumParserWPF.ViewModels
@@ -16,7 +18,7 @@ namespace ForumParserWPF.ViewModels
 
         #region Public methods
 
-        public void Log( LogEntryBase entry ) => Entries.Add( entry );
+        public void Log( LogEntryBase entry ) => Application.Current?.Dispatcher.Invoke( () => Entries.Add( entry ), DispatcherPriority.Send );
 
         #endregion
     }

@@ -1,22 +1,32 @@
 ﻿<base:WindowBase x:Class="ForumParserWPF.Views.Windows.MainWindow"
-                x:TypeArguments="viewModels:MainWindowViewModel"
-                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                xmlns:viewModels="clr-namespace:ForumParserWPF.ViewModels.Windows"
-                xmlns:converters="clr-namespace:ForumParserWPF.Views.Converters"
-                xmlns:logging="clr-namespace:CommonLib.Logging;assembly=CommonLib"
-                xmlns:base="clr-namespace:WpfCommon.Views.Base;assembly=WpfCommon"
-                mc:Ignorable="d"
-                Height="800" Width="1400" MinWidth="960" MinHeight="600"
-                d:DataContext="{d:DesignInstance d:Type={x:Type viewModels:MainWindowViewModel}, d:IsDesignTimeCreatable=True}"
-                SnapsToDevicePixels="True" Title="{Binding ViewTitle}"
-                Background="{x:Static SystemColors.ControlBrush}"
-                Icon="/Resources/icons/FP.png">
+                 x:TypeArguments="viewModels:MainWindowViewModel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:viewModels="clr-namespace:ForumParserWPF.ViewModels.Windows"
+                 xmlns:converters="clr-namespace:ForumParserWPF.Views.Converters"
+                 xmlns:c="clr-namespace:WpfCommon.ValueConverters;assembly=WpfCommon"
+                 xmlns:logging="clr-namespace:CommonLib.Logging;assembly=CommonLib"
+                 xmlns:base="clr-namespace:WpfCommon.Views.Base;assembly=WpfCommon"
+                 mc:Ignorable="d"
+                 Height="800" Width="1400" MinWidth="960" MinHeight="600"
+                 d:DataContext="{d:DesignInstance d:Type={x:Type viewModels:MainWindowViewModel}, d:IsDesignTimeCreatable=True}"
+                 SnapsToDevicePixels="True" Title="{Binding ViewTitle}"
+                 Background="{x:Static SystemColors.ControlBrush}"
+                 Icon="/Resources/icons/FP.png">
     <Grid Margin="5">
 
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
         <Grid.Resources>
+
+            <c:EqualityConverter x:Key="ForumTopicDependentEnabled" True="False" False="True" />
 
             <Style TargetType="Button">
                 <Setter Property="Margin" Value="3,0" />
@@ -24,8 +34,9 @@
             </Style>
             <Style TargetType="CheckBox">
                 <Setter Property="Margin" Value="7,0" />
-                <Setter Property="VerticalAlignment" Value="Center"></Setter>
+                <Setter Property="VerticalAlignment" Value="Center" />
             </Style>
+
             <ControlTemplate x:Key="ExpanderToggleButton" TargetType="{x:Type ToggleButton}">
                 <Border x:Name="ExpanderButtonBorder"
                         Background="{TemplateBinding Background}"
@@ -60,11 +71,6 @@
 
         </Grid.Resources>
 
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
         <Border BorderThickness="1" BorderBrush="DarkGray">
             <Border.Resources>
                 <ControlTemplate TargetType="{x:Type Expander}" x:Key="ExpanderTemplate">
@@ -117,11 +123,15 @@
                     <UniformGrid Grid.Row="2" Rows="1">
                         <GroupBox Header="Промежуточный результат" Padding="4,6,3,3" BorderBrush="DarkGray">
                             <StackPanel Orientation="Horizontal">
-                                <Button Command="{Binding SaveIntermediateResultCommand}">Сохранить...</Button>
-                                <Button Command="{Binding LoadIntermediateResultCommand}">Загрузить...</Button>
+                                <Button Command="{Binding SaveIntermediateResultCommand}"
+                                        IsEnabled="{Binding ForumTopic, Converter={StaticResource ForumTopicDependentEnabled}, ConverterParameter={x:Null}}"
+                                        Content="Сохранить..." />
+                                <Button Command="{Binding LoadIntermediateResultCommand}"
+                                        Content="Загрузить..." />
                             </StackPanel>
                         </GroupBox>
-                        <GroupBox Header="Результаты работы" Padding="4,6,3,3" BorderBrush="DarkGray">
+                        <GroupBox Header="Результаты работы" Padding="4,6,3,3" BorderBrush="DarkGray"
+                                  IsEnabled="{Binding ForumTopic, Converter={StaticResource ForumTopicDependentEnabled}, ConverterParameter={x:Null}}">
                             <StackPanel Orientation="Horizontal">
                                 <StackPanel.Resources>
                                     <Style TargetType="Button">
@@ -130,9 +140,9 @@
                                     </Style>
                                 </StackPanel.Resources>
                                 <Button Command="{Binding SaveFinalResultCommand}">Сохранить...</Button>
-                                <Grid Margin="5,0"></Grid>
-                                <CheckBox Content="TXT" IsChecked="{Binding SaveTxt}"></CheckBox>
-                                <CheckBox Content="CSV" IsChecked="{Binding SaveCsv}"></CheckBox>
+                                <Grid Margin="5,0" />
+                                <CheckBox Content="TXT" IsChecked="{Binding SaveTxt}" />
+                                <CheckBox Content="CSV" IsChecked="{Binding SaveCsv}" />
                             </StackPanel>
                         </GroupBox>
                     </UniformGrid>
@@ -140,7 +150,7 @@
                 </Grid>
             </Expander>
         </Border>
-        <Grid Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,3">
+        <Grid Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,3,0,0">
             <TabControl>
                 <TabItem Header="Фидбеки и голоса" Foreground="Blue">
                     <Grid>
@@ -197,7 +207,7 @@
                             </Grid.RowDefinitions>
                             <!-- All users -->
                             <!--                            <Border Grid.Column="0" Style="{StaticResource DataGirdBorder}">-->
-                            <DataGrid x:Name="UsersGrid" ItemsSource="{Binding AllUsers}" SelectedItem="{Binding SelectedUser}" 
+                            <DataGrid x:Name="UsersGrid" ItemsSource="{Binding AllUsers}" SelectedItem="{Binding SelectedUser}"
                                       PreviewKeyDown="UsersGrid_PreviewKeyDown">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
@@ -229,10 +239,10 @@
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="3,0" Orientation="Horizontal">
-                                <Button Height="24" Width="24" Margin="3" Padding="0" 
+                                <Button Height="24" Width="24" Margin="3" Padding="0"
                                         Command="{Binding CopyUsersWithMarksCommand}" CommandParameter="{Binding AllUsers}">
                                     <Button.Content>
-                                        <Image Source="/Resources/icons/copy16.png" Stretch="None"/>
+                                        <Image Source="/Resources/icons/copy16.png" Stretch="None" />
                                     </Button.Content>
                                 </Button>
                                 <Button Height="24" Width="24" Margin="3,0"
@@ -265,7 +275,7 @@
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" Grid.Column="1" Margin="3,0" Orientation="Horizontal">
-                                <Button Height="24" Width="24" Margin="3" 
+                                <Button Height="24" Width="24" Margin="3"
                                         Command="{Binding CopyUsersWithoutMarksCommand}" CommandParameter="{Binding VotedUsers}">
                                     <Button.Content>
                                         <Image Source="/Resources/icons/copy16.png" Stretch="None" />
@@ -288,7 +298,7 @@
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" Grid.Column="2" Margin="3,0" Orientation="Horizontal">
-                                <Button Height="24" Width="24" Margin="3" 
+                                <Button Height="24" Width="24" Margin="3"
                                         Command="{Binding CopyUsersWithoutMarksCommand}" CommandParameter="{Binding UsersWithVoteAndFeedback}">
                                     <Button.Content>
                                         <Image Source="/Resources/icons/copy16.png" Stretch="None" />
@@ -311,7 +321,7 @@
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" Grid.Column="3" Margin="3,0" Orientation="Horizontal">
-                                <Button Height="24" Width="24" Margin="3" 
+                                <Button Height="24" Width="24" Margin="3"
                                         Command="{Binding CopyUsersWithoutMarksCommand}" CommandParameter="{Binding UsersWithVoteOnly}">
                                     <Button.Content>
                                         <Image Source="/Resources/icons/copy16.png" Stretch="None" />
@@ -334,7 +344,7 @@
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" Grid.Column="4" Margin="3,0" Orientation="Horizontal">
-                                <Button Height="24" Width="24" Margin="3"  
+                                <Button Height="24" Width="24" Margin="3"
                                         Command="{Binding CopyUsersWithoutMarksCommand}" CommandParameter="{Binding UsersWithFeedbackOnly}">
                                     <Button.Content>
                                         <Image Source="/Resources/icons/copy16.png" Stretch="None" />
@@ -357,17 +367,17 @@
                                 <TextBlock VerticalAlignment="Center" Margin="0,0,5,0">Шаблон:</TextBlock>
                                 <Button Padding="6,2" Margin="3" Content="Загрузить..." />
                                 <Button Padding="6,2" Margin="3" Content="Сохранить..." />
-                                <Button Padding="6,2" Margin="3" Content="Редактировать..." Command="{Binding EditTemplateCommand}"/>
+                                <Button Padding="6,2" Margin="3" Content="Редактировать..." Command="{Binding EditTemplateCommand}" />
                                 <TextBlock VerticalAlignment="Center" Margin="5,0,5,0">Графики:</TextBlock>
                                 <Button Padding="6,2" Margin="3" Content="Сохранить..." />
                             </StackPanel>
                             <TextBlock Grid.Row="1">{Template state}</TextBlock>
                             <Grid Grid.Row="2" Margin="0,12,0,0">
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"></RowDefinition>
-                                    <RowDefinition></RowDefinition>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition />
                                 </Grid.RowDefinitions>
-                                <TextBlock Text="Результат применения шаблона"></TextBlock>
+                                <TextBlock Text="Результат применения шаблона" />
                             </Grid>
                         </Grid>
                     </Border>
@@ -375,16 +385,23 @@
             </TabControl>
         </Grid>
 
-        <Border Grid.Row="2">
+        <GridSplitter Grid.Row="2" ShowsPreview="False" ResizeDirection="Rows" HorizontalAlignment="Stretch" Height="6" />
+        <Path SnapsToDevicePixels="True" Grid.Row="2" Canvas.ZIndex="45" HorizontalAlignment="Center" VerticalAlignment="Center"
+              Stroke="Black" StrokeThickness="1"
+              Data="M0,1L16,1M0,3L16,3" />
+
+        <Border Grid.Row="3" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
             <Border.Resources>
                 <converters:BoolConverter x:Key="LogTextBoxVisibilityConverter" True="Visible" False="Collapsed" />
                 <converters:BoolConverter x:Key="LogLineVisibilityConverter" True="Collapsed" False="Visible" />
             </Border.Resources>
-            <StackPanel>
-                <ToggleButton Name="LogDisplayModeToggle" Content="Лог"
-                              Template="{StaticResource ExpanderToggleButton}" IsChecked="True" />
-                <ListBox ItemsSource="{Binding Logger.Entries}"
-                         HorizontalContentAlignment="Stretch" Height="128"
+            <DockPanel VerticalAlignment="Stretch" HorizontalAlignment="Stretch" LastChildFill="True">
+                <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="1,1,1,0" Background="{x:Static SystemColors.ControlBrush}">
+                    <TextBlock x:Name="LogDisplayModeToggle" Text="Лог" Padding="5,1" />
+                </Border>
+                <ListBox ItemsSource="{Binding UiLogger.Entries}"
+                         HorizontalContentAlignment="Stretch"
+                         MinHeight="128"
                          Visibility="{Binding ElementName=LogDisplayModeToggle, Path=IsChecked, Converter={StaticResource LogTextBoxVisibilityConverter}}"
                          VirtualizingPanel.IsVirtualizing="True"
                          VirtualizingPanel.IsContainerVirtualizable="True"
@@ -397,7 +414,7 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-            </StackPanel>
+            </DockPanel>
         </Border>
     </Grid>
 </base:WindowBase>
