@@ -12,7 +12,7 @@
                  mc:Ignorable="d"
                  Height="800" Width="1400" MinWidth="960" MinHeight="600"
                  d:DataContext="{d:DesignInstance d:Type={x:Type viewModels:MainWindowViewModel}, d:IsDesignTimeCreatable=True}"
-                 SnapsToDevicePixels="True" Title="{Binding ViewTitle}"
+                 SnapsToDevicePixels="True"  Title="{Binding ViewTitle}"
                  Background="{x:Static SystemColors.ControlBrush}"
                  Icon="/Resources/icons/FP.png">
     <Grid Margin="5">
@@ -21,7 +21,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="120"/>
         </Grid.RowDefinitions>
 
         <Grid.Resources>
@@ -71,6 +71,7 @@
 
         </Grid.Resources>
 
+        <!-- Parameters -->
         <Border BorderThickness="1" BorderBrush="DarkGray">
             <Border.Resources>
                 <ControlTemplate TargetType="{x:Type Expander}" x:Key="ExpanderTemplate">
@@ -92,7 +93,8 @@
                 </ControlTemplate>
             </Border.Resources>
             <Expander Header="Параметры" IsExpanded="True" Background="{x:Static SystemColors.ControlBrush}"
-                      Template="{StaticResource ExpanderTemplate}" Padding="5">
+                      Template="{StaticResource ExpanderTemplate}" Padding="5"
+                      IsEnabled="{Binding IsBusy, Converter={x:Static c:Converters.Not}}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition />
@@ -108,15 +110,14 @@
                         <TextBlock Grid.Column="0" Margin="3" VerticalAlignment="Center">Url темы:</TextBlock>
                         <TextBox Grid.Column="1" Margin="3" Text="{Binding TopicUrl}" HorizontalAlignment="Stretch"
                                  VerticalContentAlignment="Center" />
-                        <Button Grid.Column="2" Margin="3" Command="{Binding LoginCommand}" Padding="8,1"
+                        <Button Grid.Column="2" Margin="3" Command="{Binding LoadForumTopicCommand}" Padding="8,1"
                                 Content="Обработка" />
                     </Grid>
                     <GroupBox Grid.Row="1" Header="Опции чтения темы" Padding="-1,6,3,3" BorderBrush="DarkGray">
                         <StackPanel Orientation="Horizontal">
                             <CheckBox Content="Исключать админов" IsChecked="{Binding ExcludeAdministrators}" />
                             <CheckBox Content="Исключать координаторов" IsChecked="{Binding ExcludeCoordinators}" />
-                            <CheckBox Content="Исключать удаленные сообщения"
-                                      IsChecked="{Binding ExcludeDeletedMessages}" />
+                            <CheckBox Content="Исключать удаленные сообщения" IsChecked="{Binding ExcludeDeletedMessages}" />
                             <CheckBox Content="Только голосование" IsChecked="{Binding ParsePollOnly}" />
                         </StackPanel>
                     </GroupBox>
@@ -139,7 +140,7 @@
                                         <Setter Property="Padding" Value="8,1" />
                                     </Style>
                                 </StackPanel.Resources>
-                                <Button Command="{Binding SaveFinalResultCommand}">Сохранить...</Button>
+                                <Button Command="{Binding SaveFinalResultCommand}" Content="Сохранить..."/>
                                 <Grid Margin="5,0" />
                                 <CheckBox Content="TXT" IsChecked="{Binding SaveTxt}" />
                                 <CheckBox Content="CSV" IsChecked="{Binding SaveCsv}" />
@@ -150,7 +151,9 @@
                 </Grid>
             </Expander>
         </Border>
-        <Grid Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,3,0,0">
+        <!-- Tables -->
+        <Grid Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,3,0,0" 
+              IsEnabled="{Binding IsBusy, Converter={x:Static c:Converters.Not}}">
             <TabControl>
                 <TabItem Header="Фидбеки и голоса" Foreground="Blue">
                     <Grid>
@@ -206,8 +209,7 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <!-- All users -->
-                            <!--                            <Border Grid.Column="0" Style="{StaticResource DataGirdBorder}">-->
-                            <DataGrid x:Name="UsersGrid" ItemsSource="{Binding AllUsers}" SelectedItem="{Binding SelectedUser}"
+                            <DataGrid x:Name="AllUsersGrid" ItemsSource="{Binding AllUsers}" SelectedItem="{Binding SelectedUser}"
                                       PreviewKeyDown="UsersGrid_PreviewKeyDown">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
@@ -217,6 +219,13 @@
                                             </DataTemplate>
                                         </DataGridTextColumn.HeaderTemplate>
                                     </DataGridTextColumn>
+<!--                                    <DataGridTextColumn Width="*" Binding="{Binding Group}" IsReadOnly="True">-->
+<!--                                        <DataGridTextColumn.HeaderTemplate>-->
+<!--                                            <DataTemplate>-->
+<!--                                                <TextBlock Text="Имя" HorizontalAlignment="Stretch" />-->
+<!--                                            </DataTemplate>-->
+<!--                                        </DataGridTextColumn.HeaderTemplate>-->
+<!--                                    </DataGridTextColumn>-->
                                     <DataGridTextColumn Width="90" Binding="{Binding Mark}">
                                         <DataGridTextColumn.HeaderTemplate>
                                             <DataTemplate>
@@ -242,7 +251,7 @@
                                 <Button Height="24" Width="24" Margin="3" Padding="0"
                                         Command="{Binding CopyUsersWithMarksCommand}" CommandParameter="{Binding AllUsers}">
                                     <Button.Content>
-                                        <Image Source="/Resources/icons/copy16.png" Stretch="None" />
+                                        <Image Source="/Resources/icons/copy16.png" Stretch="None" SnapsToDevicePixels="True"/>
                                     </Button.Content>
                                 </Button>
                                 <Button Height="24" Width="24" Margin="3,0"
@@ -266,8 +275,7 @@
                                     <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
                                         <DataGridTextColumn.HeaderTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="Все проголосовавшие"
-                                                           HorizontalAlignment="Stretch" />
+                                                <TextBlock Text="Все проголосовавшие" HorizontalAlignment="Stretch" />
                                             </DataTemplate>
                                         </DataGridTextColumn.HeaderTemplate>
                                     </DataGridTextColumn>
@@ -390,16 +398,20 @@
               Stroke="Black" StrokeThickness="1"
               Data="M0,1L16,1M0,3L16,3" />
 
-        <Border Grid.Row="3" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+        <Border Grid.Row="3" VerticalAlignment="Stretch">
             <Border.Resources>
                 <converters:BoolConverter x:Key="LogTextBoxVisibilityConverter" True="Visible" False="Collapsed" />
                 <converters:BoolConverter x:Key="LogLineVisibilityConverter" True="Collapsed" False="Visible" />
             </Border.Resources>
-            <DockPanel VerticalAlignment="Stretch" HorizontalAlignment="Stretch" LastChildFill="True">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
                 <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="1,1,1,0" Background="{x:Static SystemColors.ControlBrush}">
                     <TextBlock x:Name="LogDisplayModeToggle" Text="Лог" Padding="5,1" />
                 </Border>
-                <ListBox ItemsSource="{Binding UiLogger.Entries}"
+                <ListBox Grid.Row="1" ItemsSource="{Binding UiLogger.Entries}"
                          HorizontalContentAlignment="Stretch"
                          MinHeight="128"
                          Visibility="{Binding ElementName=LogDisplayModeToggle, Path=IsChecked, Converter={StaticResource LogTextBoxVisibilityConverter}}"
@@ -414,7 +426,7 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-            </DockPanel>
+            </Grid>
         </Border>
     </Grid>
 </base:WindowBase>

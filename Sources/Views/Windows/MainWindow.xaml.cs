@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using ForumParserWPF.ViewModels.Windows;
 using ForumParserWPF.Views.Extensions;
 using WpfCommon.Views.Base;
@@ -20,28 +21,27 @@ namespace ForumParserWPF.Views.Windows
 
         private void UsersGrid_PreviewKeyDown( object sender, KeyEventArgs e )
         {
-            if ( e.IsDown && e.Key == Key.Delete )
+            if ( e.IsDown )
             {
-                var focused = FocusManager.GetFocusedElement(this);
-
-                ViewModel.DeleteSelectedUserCommand?.Execute( null );
-
-                focused = FocusManager.GetFocusedElement( this );
-
-                UpdateLayout();
-
-                focused = FocusManager.GetFocusedElement( this );
-
-                UsersGrid.Focus();
-
-                focused = FocusManager.GetFocusedElement(this);
-
-                var gridRow = ((UIElement) UsersGrid.ItemContainerGenerator.ContainerFromItem( ViewModel.SelectedUser ));
-                var gridCell = gridRow.EnumerateChildren( recursive: true ).OfType<DataGridCell>().FirstOrDefault();
-                gridCell?.Focus();
-
-                focused = FocusManager.GetFocusedElement(this);
+                if ( e.Key == Key.Delete )
+                {
+                    ViewModel.DeleteSelectedUserCommand?.Execute( null );
+                    FocusSelectedUser();
+                }
+                else if ( e.Key == Key.Z && Keyboard.IsKeyDown( Key.LeftCtrl ) || Keyboard.IsKeyDown( Key.RightCtrl ) )
+                {
+                    ViewModel.UndoDeleteUserCommand?.Execute( null );
+                    AllUsersGrid.UpdateLayout();
+                    Dispatcher.Invoke( FocusSelectedUser, DispatcherPriority.Loaded );
+                }
             }
+        }
+
+        private void FocusSelectedUser()
+        {
+            var gridRow = (UIElement) AllUsersGrid.ItemContainerGenerator.ContainerFromItem( ViewModel.SelectedUser );
+            var gridCell = gridRow?.EnumerateChildren( recursive: true ).OfType<DataGridCell>().FirstOrDefault();
+            gridCell?.Focus();
         }
     }
 }

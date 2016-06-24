@@ -16,6 +16,8 @@ namespace ForumParserWPF.ViewModels
 
         public string Name => User.Name;
 
+        public string Group => User.Group;
+
         public int Mark
         {
             get { return User.Mark; }

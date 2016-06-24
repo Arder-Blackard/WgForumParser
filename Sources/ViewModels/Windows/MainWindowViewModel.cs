@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -12,8 +13,10 @@ using System.Windows.Data;
 using System.Windows.Input;
 using CommonLib.Extensions;
 using CommonLib.Logging;
+using ForumParserWPF.Exceptions;
 using ForumParserWPF.Models;
 using ForumParserWPF.Services;
+using Newtonsoft.Json;
 using WpfCommon.Commands;
 using WpfCommon.Services;
 using WpfCommon.ViewModels.Base;
@@ -21,6 +24,9 @@ using WpfCommon.ViewModels.Dialogs;
 
 namespace ForumParserWPF.ViewModels.Windows
 {
+    /// <summary>
+    ///     View-model of the main window.
+    /// </summary>
     public class MainWindowViewModel : TaskExecutorViewModelBase, IWindowViewModel
     {
         #region Constants
@@ -42,6 +48,12 @@ namespace ForumParserWPF.ViewModels.Windows
 
         private static readonly Regex FixInvalidPathCharactersRegex = new Regex( @"[\\/\*\?\:""<>]" );
 
+        private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings
+        {
+            PreserveReferencesHandling = PreserveReferencesHandling.All,
+            TypeNameHandling = TypeNameHandling.All
+        };
+
         #endregion
 
 
@@ -50,6 +62,8 @@ namespace ForumParserWPF.ViewModels.Windows
         //  Services
         private readonly ForumParser _forumParser;
         private readonly IViewProvider _viewProvider;
+
+        private readonly Stack<KeyValuePair<int, User>> _deletedUsersStack = new Stack<KeyValuePair<int, User>>();
 
         //  Data
         private ForumTopic _forumTopic;
@@ -61,8 +75,6 @@ namespace ForumParserWPF.ViewModels.Windows
         private ICollectionView _usersWithVoteAndFeedback;
         private ICollectionView _usersWithVoteOnly;
         private ICollectionView _votedUsers;
-
-        private Stack<User> _deletedUsersStack = new Stack<User>();
 
         #endregion
 
@@ -84,9 +96,17 @@ namespace ForumParserWPF.ViewModels.Windows
         /// </summary>
         public bool SaveCsv { get; set; }
 
-        public ILogger UiLogger { get; } 
+        /// <summary>
+        ///     Displays log messages in UI.
+        /// </summary>
+        public ILogger UiLogger { get; }
 
+        /// <summary>
+        ///     The last selected final results directory.
+        /// </summary>
         public string FinalResultsDirectory { get; set; }
+
+        public string ForumTopicFile { get; set; }
 
         #endregion
 
@@ -220,9 +240,9 @@ namespace ForumParserWPF.ViewModels.Windows
         public ICommand DeleteSelectedUserCommand { get; }
 
         public ICommand EditTemplateCommand { get; }
-        public ICommand LoadIntermediateResultCommand { get; }
 
-        public ICommand LoginCommand { get; }
+        public ICommand LoadForumTopicCommand { get; }
+        public ICommand LoadIntermediateResultCommand { get; }
         public ICommand SaveFinalResultCommand { get; }
         public ICommand SaveIntermediateResultCommand { get; }
         public ICommand SetAllUsersMarksCommand { get; }
@@ -230,7 +250,7 @@ namespace ForumParserWPF.ViewModels.Windows
         public ICommand UndoDeleteUserCommand { get; }
 
         /// <summary>
-        ///     Copies the content of the passed users along with their marks to clipboard.
+        ///     Copies names of the passed users along with their marks to the clipboard.
         /// </summary>
         /// <param name="users">Users enumeration.</param>
         private void CopyUsersWithMarksCommandHandler( IEnumerable users )
@@ -242,6 +262,10 @@ namespace ForumParserWPF.ViewModels.Windows
             } );
         }
 
+        /// <summary>
+        ///     Copies names of the passed users to the clipboard.
+        /// </summary>
+        /// <param name="users">Users enumeration.</param>
         private void CopyUsersWithoutMarksCommandHandler( IEnumerable users )
         {
             Execute( () =>
@@ -251,45 +275,38 @@ namespace ForumParserWPF.ViewModels.Windows
             } );
         }
 
+        /// <summary>
+        ///     Deletes selected user.
+        /// </summary>
         private void DeleteSelectedUserCommandHandler()
         {
-            if ( SelectedUser == null )
+            var userIndex = _users.IndexOf( SelectedUser );
+            if ( userIndex == -1 )
+            {
+                Logger.Warning( $"Невозможно удалить пользователя {SelectedUser?.Name ?? "null"}." );
                 return;
+            }
 
             SelectedUser.IsDeleted = true;
-            _deletedUsersStack.Push( SelectedUser.User );
+
+            _deletedUsersStack.Push( new KeyValuePair<int, User>( userIndex, SelectedUser.User ) );
             SelectedUser = FindNextSelectedUser();
-
-            RefreshUsers();
+            _users.RemoveAt( userIndex );
         }
 
-        private void RefreshUsers()
-        {
-            AllUsers.Refresh();
-            VotedUsers.Refresh();
-            UsersWithVoteAndFeedback.Refresh();
-            UsersWithVoteOnly.Refresh();
-            UsersWithFeedbackOnly.Refresh();
-        }
-
+        /// <summary>
+        ///     Displays charts template editor.
+        /// </summary>
         private void EditTemplateCommandHandler()
         {
-            try
-            {
-                _viewProvider.Show<TemplateEditorViewModel>( this, viewModel => viewModel.ForumTopic = ForumTopic );
-            }
-            catch
-            {
-                //  Do nothing
-            }
+            Execute( () => _viewProvider.Show<TemplateEditorViewModel>( this, viewModel => viewModel.ForumTopic = ForumTopic ) );
         }
 
-        private Task LoadIntermediateResultCommandHandler()
-        {
-            return Task.CompletedTask;
-        }
-
-        private async Task LoginCommandHandler()
+        /// <summary>
+        ///     Performs login to forum.
+        /// </summary>
+        /// <returns></returns>
+        private async Task LoadForumTopicCommandHandler()
         {
             if ( SessionId == null )
             {
@@ -308,13 +325,47 @@ namespace ForumParserWPF.ViewModels.Windows
                     new ParserSettings(),
                     new ParseOptions
                     {
-                        SkipCoordinators = true,
-                        SkipAdministrators = true,
-                        PollOnly = false,
-                        SkipDeleted = true
+                        ExcludeCoordinators = ExcludeCoordinators,
+                        ExcludeAdministrators = ExcludeAdministrators,
+                        ParsePollOnly = ParsePollOnly,
+                        ExcludeDeletedMessages = ExcludeDeletedMessages
                     },
-                    logger: Logger );
+                    logger: Logger,
+                    cancellationToken: CancellationToken );
             }, ExecutionParameters.SuppressProgress );
+        }
+
+        /// <summary>
+        ///     Loads intermediate results
+        /// </summary>
+        /// <returns></returns>
+        private void LoadIntermediateResultCommandHandler()
+        {
+            Execute( () =>
+            {
+                var saveFile = _viewProvider.ShowDialog<OpenFileViewModel>( this, viewModel =>
+                {
+                    viewModel.FileName = ForumTopicFile;
+                    viewModel.Filter = "Parser intermediate results|*.wfp";
+                    viewModel.Title = "Укажите путь к файлу";
+                } );
+
+                if ( saveFile.Result != true )
+                    return;
+
+                ForumTopicFile = saveFile.ViewModel.FileName;
+
+                try
+                {
+                    ForumTopic = LoadForumTopicFromFile( ForumTopicFile );
+                    UiLogger.Info( $"Промежуточные результаты загружены из файла '{ForumTopicFile}'" );
+                }
+                catch ( ForumParserException ex )
+                {
+                    _viewProvider.ShowMessageBox( this, ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error );
+                    Logger.Error( ex.Message, ex );
+                }
+            } );
         }
 
         /// <summary>
@@ -358,23 +409,58 @@ namespace ForumParserWPF.ViewModels.Windows
             } );
         }
 
+        private void SaveIntermediateResultCommandHandler()
+        {
+            Execute( () =>
+            {
+                var saveFile = _viewProvider.ShowDialog<SaveFileViewModel>( this, viewModel =>
+                {
+                    viewModel.FileName = ForumTopicFile;
+                    viewModel.Filter = "Parser intermediate results|*.wfp";
+                    viewModel.Title = "Укажите путь к файлу";
+                    viewModel.CheckFileExists = false;
+                } );
+
+                if ( saveFile.Result != true )
+                    return;
+
+                ForumTopicFile = saveFile.ViewModel.FileName;
+                var json = JsonConvert.SerializeObject( ForumTopic, Formatting.Indented, JsonSerializerSettings );
+
+                if ( File.Exists( ForumTopicFile ) )
+                    File.Delete( ForumTopicFile );
+
+                using ( var file = ZipFile.Open( ForumTopicFile, ZipArchiveMode.Create ) )
+                using ( var stream = file.CreateEntry( "topic.json" ).Open() )
+                using ( var writer = new StreamWriter( stream ) )
+                    writer.Write( json );
+
+                UiLogger.Info( $"Промежуточные результаты сохранены в файл '{ForumTopicFile}'" );
+            } );
+        }
+
+        /// <summary>
+        ///     Sets the <paramref name="mark" /> value for all the users.
+        /// </summary>
+        /// <param name="mark"></param>
         private void SetAllUsersMarksCommandHandler( int mark )
         {
             foreach ( var user in _users )
                 user.Mark = mark;
         }
 
-        private void SaveIntermediateResultCommandHandler()
-        {
-            
-        }
-
+        /// <summary>
+        ///     Restores the last deleted user.
+        /// </summary>
         private void UndoDeleteUserCommandHandler()
         {
             if ( _deletedUsersStack.Count == 0 )
                 return;
 
-            _deletedUsersStack.Pop().IsDeleted = false;
+            var deletedUser = _deletedUsersStack.Pop();
+            _users.Insert( deletedUser.Key, SelectedUser = new UserViewModel( deletedUser.Value ) );
+            SelectedUser.IsDeleted = false;
+
             RefreshUsers();
         }
 
@@ -428,9 +514,9 @@ namespace ForumParserWPF.ViewModels.Windows
             UiLogger = logger;
             _viewProvider = viewProvider;
             _forumParser = forumParser;
-            LoginCommand = new AsyncDelegateCommand( LoginCommandHandler );
+            LoadForumTopicCommand = new AsyncDelegateCommand( LoadForumTopicCommandHandler );
             SaveIntermediateResultCommand = new DelegateCommand( SaveIntermediateResultCommandHandler );
-            LoadIntermediateResultCommand = new AsyncDelegateCommand( LoadIntermediateResultCommandHandler );
+            LoadIntermediateResultCommand = new DelegateCommand( LoadIntermediateResultCommandHandler );
             SetAllUsersMarksCommand = new DelegateCommand<int>( SetAllUsersMarksCommandHandler );
             EditTemplateCommand = new DelegateCommand( EditTemplateCommandHandler );
             CopyUsersWithMarksCommand = new DelegateCommand<IEnumerable>( CopyUsersWithMarksCommandHandler );
@@ -446,6 +532,57 @@ namespace ForumParserWPF.ViewModels.Windows
 
 
         #region Non-public methods
+
+        private ForumTopic LoadForumTopicFromFile( string fileName )
+        {
+            try
+            {
+                using ( var zipArchive = ZipFile.Open( fileName, ZipArchiveMode.Read ) )
+                using ( var stream = zipArchive.GetEntry( "topic.json" )?.Open() )
+                {
+                    if ( stream == null )
+                        throw new IOException( "Неверный формат сохраненных данных." );
+
+                    using ( var reader = new StreamReader( stream ) )
+                    {
+                        var json = reader.ReadToEnd();
+                        try
+                        {
+                            return JsonConvert.DeserializeObject<ForumTopic>( json, JsonSerializerSettings );
+                        }
+                        catch ( Exception ex )
+                        {
+                            throw new InvalidDataException( "Ошибка при чтении 'topic.json'.", ex );
+                        }
+                    }
+                }
+            }
+            catch ( FileNotFoundException ex )
+            {
+                throw new ForumParserException( $"Файл не найден.", ex );
+            }
+            catch ( IOException ex )
+            {
+                throw new ForumParserException( $"Ошибка при загрузке файла.", ex );
+            }
+            catch ( InvalidDataException ex )
+            {
+                throw new ForumParserException( $"Неверный формат данных.", ex );
+            }
+            catch ( Exception ex )
+            {
+                throw new ForumParserException( $"Ошибка при загрузке: ", ex );
+            }
+        }
+
+        private void RefreshUsers()
+        {
+            AllUsers.Refresh();
+            VotedUsers.Refresh();
+            UsersWithVoteAndFeedback.Refresh();
+            UsersWithVoteOnly.Refresh();
+            UsersWithFeedbackOnly.Refresh();
+        }
 
         private void Execute( Action action )
         {
@@ -513,7 +650,7 @@ namespace ForumParserWPF.ViewModels.Windows
 
         private void SetUsers( IEnumerable<User> users )
         {
-            _users = new ObservableCollection<UserViewModel>( users.Select( user => new UserViewModel( user ) ) );
+            _users = new ObservableCollection<UserViewModel>( users.Where( user => !user.IsDeleted ).Select( user => new UserViewModel( user ) ) );
             RecreateFilters();
         }
 

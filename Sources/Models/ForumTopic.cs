@@ -21,6 +21,10 @@ namespace ForumParserWPF.Models
 
         public Poll Poll { get; set; }
 
+        public string Url { get; set; }
+
+        public string Dummy { get; set; }
+
         #endregion
     }
 }

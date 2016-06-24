@@ -19,10 +19,10 @@ namespace ForumParserWPF.Services
     {
         #region Auto-properties
 
-        public bool SkipAdministrators { get; set; }
-        public bool SkipCoordinators { get; set; }
-        public bool SkipDeleted { get; set; }
-        public bool PollOnly { get; set; }
+        public bool ExcludeAdministrators { get; set; }
+        public bool ExcludeCoordinators { get; set; }
+        public bool ExcludeDeletedMessages { get; set; }
+        public bool ParsePollOnly { get; set; }
 
         #endregion
     }
@@ -59,6 +59,18 @@ namespace ForumParserWPF.Services
 
         private class ForumParserInternal
         {
+            #region Constants
+
+            private static readonly Regex PollAnswerVotesCount = new Regex( @".*?(?<value>\d+)\s+vote", RegexOptions.IgnoreCase );
+
+            private static readonly Regex PollAnswerVotesUserIds = new Regex( @"<a\s+href='(?<link>.*?)'>.*<span.*?>(?<name>.*?)<\/span>.*<\/a>",
+                                                                              RegexOptions.IgnoreCase | RegexOptions.Multiline );
+
+            private static readonly Regex UserIdRegex = new Regex( @".*?(?<id>\d+)/", RegexOptions.IgnoreCase );
+
+            #endregion
+
+
             #region Fields
 
             private readonly IBrowsingContext _browsingContext;
@@ -71,12 +83,6 @@ namespace ForumParserWPF.Services
             private readonly string _topicUrl;
 
             private readonly Dictionary<string, User> _users = new Dictionary<string, User>();
-            private readonly Regex PollAnswerVotesCount = new Regex( @".*?(?<value>\d+)\s+vote", RegexOptions.IgnoreCase );
-
-            private readonly Regex PollAnswerVotesUserIds = new Regex( @"<a\s+href='(?<link>.*?)'>.*<span.*?>(?<name>.*?)<\/span>.*<\/a>",
-                                                                       RegexOptions.IgnoreCase | RegexOptions.Multiline );
-
-            private readonly Regex UserIdRegex = new Regex( @".*?(?<id>\d+)/", RegexOptions.IgnoreCase );
 
             #endregion
 
@@ -105,16 +111,22 @@ namespace ForumParserWPF.Services
 
             #region Public methods
 
-            public async Task<ForumTopic> Parse( string topicUrl )
+            public Task<ForumTopic> Parse( string topicUrl )
             {
-                var forumTopic = new ForumTopic();
+                var forumTopic = new ForumTopic { Url = topicUrl };
 
-                if ( _options.PollOnly )
-                {
-                    var document = await _browsingContext.OpenAsync( topicUrl );
-                    forumTopic.Poll = ParsePoll( document ) ?? ParsePoll( await _browsingContext.OpenAsync( FindPollResultsLink( document ) ) );
-                    return forumTopic;
-                }
+                return _options.ParsePollOnly
+                           ? ParsePollOnly( topicUrl, forumTopic )
+                           : ParseFullTopic( topicUrl, forumTopic );
+            }
+
+            #endregion
+
+
+            #region Non-public methods
+
+            private async Task<ForumTopic> ParseFullTopic( string topicUrl, ForumTopic forumTopic )
+            {
                 _logger?.Info( "Загрузка отзывов" );
 
                 var documents = await LoadForumTopicPages( topicUrl );
@@ -140,10 +152,12 @@ namespace ForumParserWPF.Services
                 return forumTopic;
             }
 
-            #endregion
-
-
-            #region Non-public methods
+            private async Task<ForumTopic> ParsePollOnly( string topicUrl, ForumTopic forumTopic )
+            {
+                var document = await _browsingContext.OpenAsync( topicUrl );
+                forumTopic.Poll = ParsePoll( document ) ?? ParsePoll( await _browsingContext.OpenAsync( FindPollResultsLink( document ) ) );
+                return forumTopic;
+            }
 
             private string ParseTopicName( IDocument document )
             {
@@ -167,6 +181,10 @@ namespace ForumParserWPF.Services
                     ParsePost( post );
             }
 
+            /// <summary>
+            ///     Parses the post contained in <paramref name="post" /> element.
+            /// </summary>
+            /// <param name="post">The post element.</param>
             private void ParsePost( IElement post )
             {
                 var profileLink = post.QuerySelector( "a[hovercard-ref=member]" )?.Attributes["href"]?.Value;
@@ -177,14 +195,16 @@ namespace ForumParserWPF.Services
                 if ( userId == null )
                     return;
 
-                var user = _users.GetOrInsert( userId, () => new User { Id = userId } );
+                var userGroup = post.QuerySelector("li.group_title span")?.TextContent ?? string.Empty;
+                var userName = post.QuerySelector("span[itemprop=name]")?.TextContent ?? string.Empty;
 
-                user.Group = post.QuerySelector( "li.group_title span" )?.TextContent ?? string.Empty;
-                user.Name = post.QuerySelector( "span[itemprop=name]" )?.TextContent ?? string.Empty;
-
-                if ( _options.SkipAdministrators && _settings.Administrators.Contains( user.Group ) ||
-                     _options.SkipCoordinators && _settings.Coordinators.Contains( user.Group ) )
+                if ( _options.ExcludeAdministrators && _settings.Administrators.Contains( userGroup ) ||
+                     _options.ExcludeCoordinators && _settings.Coordinators.Contains( userGroup ) )
+                {
                     return;
+                }
+
+                var user = _users.GetOrInsert( userId, () => new User { Id = userId, Name = userName, Group = userGroup } );
 
                 foreach ( var postBlock in post.QuerySelectorAll( "div.post_body" ) )
                 {

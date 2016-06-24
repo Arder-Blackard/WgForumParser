@@ -6,7 +6,7 @@ namespace ForumParserWPF.Views.Extensions
 {
     public static class VisualExtensions
     {
-        #region Non-public methods
+        #region Public methods
 
         public static IEnumerable<DependencyObject> EnumerateChildren( this Visual element, bool recursive = false )
         {
@@ -26,7 +26,6 @@ namespace ForumParserWPF.Views.Extensions
                     }
                 }
             }
-
         }
 
         #endregion
