@@ -154,8 +154,17 @@ namespace ForumParserWPF.Services
 
             private async Task<ForumTopic> ParsePollOnly( string topicUrl, ForumTopic forumTopic )
             {
+                _logger?.Info( "Загрузка голосования" );
+
                 var document = await _browsingContext.OpenAsync( topicUrl );
                 forumTopic.Poll = ParsePoll( document ) ?? ParsePoll( await _browsingContext.OpenAsync( FindPollResultsLink( document ) ) );
+
+                _logger?.Info("Сбор данных о пользователях");
+
+                forumTopic.Users = _users.Values.OrderBy(user => user.Name).ToList();
+
+                _logger?.Info("Загрузка данных завершена");
+
                 return forumTopic;
             }
 

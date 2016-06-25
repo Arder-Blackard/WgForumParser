@@ -363,7 +363,7 @@
                         </Grid>
                     </Grid>
                 </TabItem>
-                <TabItem Header="Графики голосования">
+                <TabItem Header="Графики голосования (не реализовано)">
                     <Border Padding="8">
                         <Grid>
                             <Grid.RowDefinitions>
