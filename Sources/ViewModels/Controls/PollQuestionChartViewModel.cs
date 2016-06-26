@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using ForumParserWPF.Models;
+using ForumParser.Models;
 
-namespace ForumParserWPF.ViewModels.Windows
+namespace ForumParser.ViewModels.Controls
 {
     public class PollQuestionChartViewModel
     {

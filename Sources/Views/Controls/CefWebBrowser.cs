@@ -2,7 +2,7 @@
 using CefSharp;
 using CefSharp.Wpf;
 
-namespace ForumParserWPF.Views.Controls
+namespace ForumParser.Views.Controls
 {
     public class CefWebBrowser : ChromiumWebBrowser
     {

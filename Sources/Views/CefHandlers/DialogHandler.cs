@@ -1,7 +1,7 @@
-﻿using CefSharp;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using CefSharp;
 
-namespace ForumParserWPF.Views.CefHandlers
+namespace ForumParser.Views.CefHandlers
 {
     public class DialogHandler : IDialogHandler
     {

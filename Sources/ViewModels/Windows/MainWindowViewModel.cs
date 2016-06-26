@@ -13,16 +13,16 @@ using System.Windows.Data;
 using System.Windows.Input;
 using CommonLib.Extensions;
 using CommonLib.Logging;
-using ForumParserWPF.Exceptions;
-using ForumParserWPF.Models;
-using ForumParserWPF.Services;
+using ForumParser.Exceptions;
+using ForumParser.Models;
+using ForumParser.Services;
 using Newtonsoft.Json;
 using WpfCommon.Commands;
 using WpfCommon.Services;
 using WpfCommon.ViewModels.Base;
 using WpfCommon.ViewModels.Dialogs;
 
-namespace ForumParserWPF.ViewModels.Windows
+namespace ForumParser.ViewModels.Windows
 {
     /// <summary>
     ///     View-model of the main window.
@@ -60,7 +60,7 @@ namespace ForumParserWPF.ViewModels.Windows
         #region Fields
 
         //  Services
-        private readonly ForumParser _forumParser;
+        private readonly ForumTopicParser _forumParser;
         private readonly IViewProvider _viewProvider;
 
         private readonly Stack<KeyValuePair<int, User>> _deletedUsersStack = new Stack<KeyValuePair<int, User>>();
@@ -308,6 +308,12 @@ namespace ForumParserWPF.ViewModels.Windows
         /// <returns></returns>
         private async Task LoadForumTopicCommandHandler()
         {
+            if ( string.IsNullOrEmpty( TopicUrl?.Trim() ) )
+            {
+                _viewProvider.ShowMessageBox( this, "Не задан URL темы.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error );
+                return;
+            }
+
             if ( SessionId == null )
             {
                 var login = _viewProvider.Show<LoginHelperWindowViewModel>( this );
@@ -319,19 +325,27 @@ namespace ForumParserWPF.ViewModels.Windows
 
             await ExecuteAsync( async () =>
             {
-                ForumTopic = await _forumParser.Parse(
-                    TopicUrl,
-                    SessionId,
-                    new ParserSettings(),
-                    new ParseOptions
-                    {
-                        ExcludeCoordinators = ExcludeCoordinators,
-                        ExcludeAdministrators = ExcludeAdministrators,
-                        ParsePollOnly = ParsePollOnly,
-                        ExcludeDeletedMessages = ExcludeDeletedMessages
-                    },
-                    logger: Logger,
-                    cancellationToken: CancellationToken );
+                try
+                {
+                    ForumTopic = await _forumParser.Parse(
+                        TopicUrl,
+                        SessionId,
+                        new ParserSettings(),
+                        new ParseOptions
+                        {
+                            ExcludeCoordinators = ExcludeCoordinators,
+                            ExcludeAdministrators = ExcludeAdministrators,
+                            ParsePollOnly = ParsePollOnly,
+                            ExcludeDeletedMessages = ExcludeDeletedMessages
+                        },
+                        logger: Logger,
+                        cancellationToken: CancellationToken );
+                }
+                catch ( Exception ex )
+                {
+                    UiLogger.Error( ex.Message, ex );
+                    _viewProvider.ShowMessageBox( this, ex.Message, "Ошибка загрузки темы", MessageBoxButton.OK, MessageBoxImage.Error );
+                }
             }, ExecutionParameters.SuppressProgress );
         }
 
@@ -509,7 +523,7 @@ namespace ForumParserWPF.ViewModels.Windows
 
         #region Initialization
 
-        public MainWindowViewModel( IViewProvider viewProvider, ForumParser forumParser, ILogger logger ) : base( logger )
+        public MainWindowViewModel( IViewProvider viewProvider, ForumTopicParser forumParser, ILogger logger ) : base( logger )
         {
             UiLogger = logger;
             _viewProvider = viewProvider;
@@ -525,7 +539,6 @@ namespace ForumParserWPF.ViewModels.Windows
             SaveFinalResultCommand = new DelegateCommand( SaveFinalResultCommandHandler );
             UndoDeleteUserCommand = new DelegateCommand( UndoDeleteUserCommandHandler );
 
-            TopicUrl = "http://supertest.worldoftanks.com/index.php?/topic/8281-тестирование-карты-112-eiffeltower-стандартный-бой/";
         }
 
         #endregion
@@ -596,7 +609,7 @@ namespace ForumParserWPF.ViewModels.Windows
             }
             catch ( Exception ex )
             {
-                UiLogger.Error( "Unhandled exception", ex );
+                UiLogger.Error( $"Необработанное исключение: {ex.Message}", ex );
                 OnTaskFailed( ex );
             }
         }

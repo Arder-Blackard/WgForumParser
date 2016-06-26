@@ -1,8 +1,8 @@
 ﻿using System.Windows;
-using ForumParserWPF.ViewModels.Windows;
+using ForumParser.ViewModels.Windows;
 using WpfCommon.Views.Base;
 
-namespace ForumParserWPF.Views.Windows
+namespace ForumParser.Views.Windows
 {
     /// <summary>
     ///     Interaction logic for LoginHelperWindow.xaml

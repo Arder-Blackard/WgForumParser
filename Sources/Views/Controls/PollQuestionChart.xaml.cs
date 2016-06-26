@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 
-namespace ForumParserWPF.Views.Controls
+namespace ForumParser.Views.Controls
 {
     /// <summary>
     /// Interaction logic for PollQuestionChart.xaml

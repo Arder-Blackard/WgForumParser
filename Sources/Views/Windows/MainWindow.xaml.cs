@@ -3,11 +3,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
-using ForumParserWPF.ViewModels.Windows;
-using ForumParserWPF.Views.Extensions;
+using ForumParser.ViewModels.Windows;
+using ForumParser.Views.Extensions;
 using WpfCommon.Views.Base;
 
-namespace ForumParserWPF.Views.Windows
+namespace ForumParser.Views.Windows
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

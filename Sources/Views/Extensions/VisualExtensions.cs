@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace ForumParserWPF.Views.Extensions
+namespace ForumParser.Views.Extensions
 {
     public static class VisualExtensions
     {

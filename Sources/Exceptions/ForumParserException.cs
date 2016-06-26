@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace ForumParserWPF.Exceptions
+namespace ForumParser.Exceptions
 {
     [Serializable]
     public class ForumParserException : Exception

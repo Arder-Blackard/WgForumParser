@@ -1,4 +1,4 @@
-﻿namespace ForumParserWPF.Models
+﻿namespace ForumParser.Models
 {
     public class User
     {

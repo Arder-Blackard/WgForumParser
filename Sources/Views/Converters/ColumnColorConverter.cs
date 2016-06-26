@@ -6,7 +6,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using CommonLib.Extensions;
 
-namespace ForumParserWPF.Views.Converters
+namespace ForumParser.Views.Converters
 {
     public class ColumnColorConverter : IValueConverter
     {

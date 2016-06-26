@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
-using ForumParserWPF.Models;
+using ForumParser.Models;
+using ForumParser.ViewModels.Controls;
 using WpfCommon.Commands;
 using WpfCommon.ViewModels.Base;
 
-namespace ForumParserWPF.ViewModels.Windows
+namespace ForumParser.ViewModels.Windows
 {
     public class TemplateEditorViewModel : SimpleWindowViewModelBase
     {

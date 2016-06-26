@@ -11,9 +11,10 @@ using AngleSharp.Services.Default;
 using CommonLib.Extensions;
 using CommonLib.Logging;
 using CommonLib.Progress;
-using ForumParserWPF.Models;
+using ForumParser.Exceptions;
+using ForumParser.Models;
 
-namespace ForumParserWPF.Services
+namespace ForumParser.Services
 {
     public class ParseOptions
     {
@@ -37,7 +38,7 @@ namespace ForumParserWPF.Services
         #endregion
     }
 
-    public sealed class ForumParser
+    public sealed class ForumTopicParser
     {
         #region Public methods
 
@@ -49,7 +50,7 @@ namespace ForumParserWPF.Services
                                        ILogger logger = null,
                                        CancellationToken cancellationToken = default(CancellationToken) )
         {
-            return new ForumParserInternal( topicUrl, sessionId, settings, options, progress, logger, cancellationToken ).Parse( topicUrl );
+            return new ForumParserInternal( topicUrl, sessionId, settings, options, progress, logger, cancellationToken ).ParseAsync( topicUrl );
         }
 
         #endregion
@@ -103,7 +104,15 @@ namespace ForumParserWPF.Services
                 _progress = progress;
                 _logger = logger;
                 _cancellationToken = cancellationToken;
-                _browsingContext = CreateBrowsingContext( topicUrl, sessionId );
+
+                try
+                {
+                    _browsingContext = CreateBrowsingContext( topicUrl, sessionId );
+                }
+                catch (Exception ex)
+                {
+                    throw new ForumParserException( "Невозможно подключиться к указанному адресу", ex );
+                }
             }
 
             #endregion
@@ -111,13 +120,13 @@ namespace ForumParserWPF.Services
 
             #region Public methods
 
-            public Task<ForumTopic> Parse( string topicUrl )
+            public Task<ForumTopic> ParseAsync( string topicUrl )
             {
                 var forumTopic = new ForumTopic { Url = topicUrl };
 
                 return _options.ParsePollOnly
-                           ? ParsePollOnly( topicUrl, forumTopic )
-                           : ParseFullTopic( topicUrl, forumTopic );
+                           ? ParsePollOnlyAsync( topicUrl, forumTopic )
+                           : ParseFullTopicAsync( topicUrl, forumTopic );
             }
 
             #endregion
@@ -125,13 +134,16 @@ namespace ForumParserWPF.Services
 
             #region Non-public methods
 
-            private async Task<ForumTopic> ParseFullTopic( string topicUrl, ForumTopic forumTopic )
+            private async Task<ForumTopic> ParseFullTopicAsync( string topicUrl, ForumTopic forumTopic )
             {
                 _logger?.Info( "Загрузка отзывов" );
 
                 var documents = await LoadForumTopicPages( topicUrl );
 
                 forumTopic.Name = documents.Select( ParseTopicName ).FirstOrDefault( name => name != null );
+
+//                if (forumTopic.Name == null)
+//                    throw new ForumParserException("Невозможно найти имя темы. ");
 
                 _logger?.Info( $"Имя темы: {forumTopic.Name ?? "<не определено>"}" );
 
@@ -141,36 +153,53 @@ namespace ForumParserWPF.Services
 
                 _logger?.Info( "Анализ голосования" );
 
-                forumTopic.Poll = ParsePoll( documents[0] ) ?? ParsePoll( await _browsingContext.OpenAsync( FindPollResultsLink( documents[0] ) ) );
+                forumTopic.Poll = ParsePoll( documents[0] );
+                if ( forumTopic.Poll == null )
+                {
+                    var pollResultsLink = FindPollResultsLink( documents[0] );
+                    forumTopic.Poll = pollResultsLink != null ? ParsePoll( await _browsingContext.OpenAsync( pollResultsLink ) ) : new Poll();
+                }
 
                 _logger?.Info( "Сбор данных о пользователях" );
 
                 forumTopic.Users = _users.Values.OrderBy( user => user.Name ).ToList();
 
-                _logger?.Info( "Загрузка данных завершена" );
+                if ( forumTopic.Users.Count == 0 && forumTopic.Poll.Questions.Count == 0 )
+                    _logger?.Info( "Не найдены данные, соответствующие формату темы форума" );
+                else
+                    _logger?.Info( "Загрузка данных завершена" );
 
                 return forumTopic;
             }
 
-            private async Task<ForumTopic> ParsePollOnly( string topicUrl, ForumTopic forumTopic )
+            private async Task<ForumTopic> ParsePollOnlyAsync( string topicUrl, ForumTopic forumTopic )
             {
                 _logger?.Info( "Загрузка голосования" );
 
                 var document = await _browsingContext.OpenAsync( topicUrl );
-                forumTopic.Poll = ParsePoll( document ) ?? ParsePoll( await _browsingContext.OpenAsync( FindPollResultsLink( document ) ) );
+                forumTopic.Poll = ParsePoll(document);
+                if (forumTopic.Poll == null)
+                {
+                    var pollResultsLink = FindPollResultsLink(document);
+                    forumTopic.Poll = pollResultsLink != null ? ParsePoll(await _browsingContext.OpenAsync(pollResultsLink)) : new Poll();
+                }
 
                 _logger?.Info("Сбор данных о пользователях");
 
                 forumTopic.Users = _users.Values.OrderBy(user => user.Name).ToList();
 
-                _logger?.Info("Загрузка данных завершена");
+                if (forumTopic.Users.Count == 0 && forumTopic.Poll.Questions.Count == 0)
+                    _logger?.Info("Не найдены данные, соответствующие формату темы форума");
+                else
+                    _logger?.Info("Загрузка данных завершена");
+
 
                 return forumTopic;
             }
 
             private string ParseTopicName( IDocument document )
             {
-                return document.QuerySelector( "h1.ipsType_pagetitle" ).TextContent.Trim();
+                return document.QuerySelector( "h1.ipsType_pagetitle" )?.TextContent.Trim();
             }
 
             /// <summary>

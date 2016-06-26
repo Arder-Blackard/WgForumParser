@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace ForumParserWPF.Views.Controls
+namespace ForumParser.Views.Controls
 {
     /// <summary>
     ///     Interaction logic for MergedChart.xaml

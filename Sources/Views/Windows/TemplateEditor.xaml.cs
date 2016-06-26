@@ -7,13 +7,14 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using CommonLib.Extensions;
-using ForumParserWPF.Models;
-using ForumParserWPF.ViewModels.Windows;
-using ForumParserWPF.Views.Controls;
-using ForumParserWPF.Views.Extensions;
+using ForumParser.Models;
+using ForumParser.ViewModels.Controls;
+using ForumParser.ViewModels.Windows;
+using ForumParser.Views.Controls;
+using ForumParser.Views.Extensions;
 using WpfCommon.Views.Base;
 
-namespace ForumParserWPF.Views.Windows
+namespace ForumParser.Views.Windows
 {
     /// <summary>
     ///     Interaction logic for MainWindow.xaml

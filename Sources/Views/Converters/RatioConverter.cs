@@ -2,9 +2,8 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
-using static System.Convert;
 
-namespace ForumParserWPF.Views.Converters
+namespace ForumParser.Views.Converters
 {
     public class RatioConverter : IMultiValueConverter
     {
@@ -22,9 +21,9 @@ namespace ForumParserWPF.Views.Converters
             try
             {
                 if ( values.Length == 2 )
-                    return ToDouble( values[0] )*ToDouble( values[1] );
+                    return System.Convert.ToDouble( values[0] )*System.Convert.ToDouble( values[1] );
                 if ( values.Length == 3 )
-                    return ToDouble( values[0] )*(ToDouble( values[1] )/ToDouble( values[2] ));
+                    return System.Convert.ToDouble( values[0] )*(System.Convert.ToDouble( values[1] )/System.Convert.ToDouble( values[2] ));
                 return DependencyProperty.UnsetValue;
             }
             catch ( Exception )

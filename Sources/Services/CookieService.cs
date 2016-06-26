@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using CefSharp;
 
-namespace ForumParserWPF.Services
+namespace ForumParser.Services
 {
     public sealed class CookieService
     {

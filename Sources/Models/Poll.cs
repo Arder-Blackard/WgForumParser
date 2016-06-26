@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 
-namespace ForumParserWPF.Models
+namespace ForumParser.Models
 {
     public class Poll
     {
         #region Auto-properties
 
-        public IList<PollQuestion> Questions { get; set; }
+        public IList<PollQuestion> Questions { get; set; } = new List<PollQuestion>();
 
         #endregion
     }

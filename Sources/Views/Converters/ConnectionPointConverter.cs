@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace ForumParserWPF.Views.Converters
+namespace ForumParser.Views.Converters
 {
     public class ConnectionPointConverter : IMultiValueConverter
     {

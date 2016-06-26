@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Windows;
 using CommonLib.Logging;
-using ForumParserWPF.Properties;
-using ForumParserWPF.Services;
-using ForumParserWPF.ViewModels;
-using ForumParserWPF.ViewModels.Windows;
-using ForumParserWPF.Views;
+using ForumParser.Properties;
+using ForumParser.Services;
+using ForumParser.ViewModels;
+using ForumParser.ViewModels.Windows;
 using SimpleInjector;
 using WpfCommon.Services;
 using WpfCommon.ViewModels.Base;
 using WpfCommon.Views.Base;
 
-namespace ForumParserWPF
+namespace ForumParser
 {
     /// <summary>
     ///     Interaction logic for App.xaml
@@ -58,7 +57,7 @@ namespace ForumParserWPF
             //  Common services
             container.RegisterSingleton<ILogger>( () => new WpfLogger() );
             container.RegisterSingleton<CookieService>();
-            container.RegisterSingleton<ForumParser>();
+            container.RegisterSingleton<ForumTopicParser>();
 
             //  ViewModels
             container.Register<MainWindowViewModel>();

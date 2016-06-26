@@ -1,6 +1,6 @@
 ﻿using WpfCommon.ViewModels.Base;
 
-namespace ForumParserWPF.ViewModels.Windows
+namespace ForumParser.ViewModels.Windows
 {
     public class StringInputDialogViewModel : SimpleWindowViewModelBase
     {

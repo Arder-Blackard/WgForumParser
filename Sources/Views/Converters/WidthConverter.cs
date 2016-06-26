@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace ForumParserWPF.Views.Converters
+namespace ForumParser.Views.Converters
 {
     public class WidthConverter : IValueConverter
     {

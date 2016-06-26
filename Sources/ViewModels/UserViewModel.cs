@@ -1,7 +1,7 @@
-﻿using ForumParserWPF.Models;
+﻿using ForumParser.Models;
 using WpfCommon.ViewModels.Base;
 
-namespace ForumParserWPF.ViewModels
+namespace ForumParser.ViewModels
 {
     public class UserViewModel : SimpleViewModelBase
     {

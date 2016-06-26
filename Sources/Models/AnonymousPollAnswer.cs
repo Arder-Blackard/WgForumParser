@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ForumParserWPF.Models
+namespace ForumParser.Models
 {
     public class AnonymousPollAnswer : PollAnswerBase
     {

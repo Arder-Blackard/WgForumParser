@@ -1,15 +1,15 @@
-﻿<UserControl x:Class="ForumParserWPF.Views.Controls.TemplateChart"
+﻿<UserControl x:Class="ForumParser.Views.Controls.TemplateChart"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:windows="clr-namespace:ForumParserWPF.ViewModels.Windows"
-             xmlns:controls="clr-namespace:ForumParserWPF.Views.Controls"
-             xmlns:converters="clr-namespace:ForumParserWPF.Views.Converters"
+             xmlns:controls="clr-namespace:ForumParser.Views.Controls"
+             xmlns:converters="clr-namespace:ForumParser.Views.Converters"
+             xmlns:controls1="clr-namespace:ForumParser.ViewModels.Controls"
              mc:Ignorable="d"
              Width="{Binding Width}" Height="{Binding Height}"
              d:DesignHeight="300" d:DesignWidth="300"
-             d:DataContext="{d:DesignInstance d:Type=windows:TemplateViewModel, d:IsDesignTimeCreatable=True}">
+             d:DataContext="{d:DesignInstance d:Type=controls1:TemplateViewModel, d:IsDesignTimeCreatable=True}">
 
     <UserControl.Resources>
         <ItemsPanelTemplate x:Key="ReversedEvenlyDistributedRowGrid">

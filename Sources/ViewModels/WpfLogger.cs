@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Threading;
 using CommonLib.Logging;
 
-namespace ForumParserWPF.ViewModels
+namespace ForumParser.ViewModels
 {
     public class WpfLogger : ILogger
     {

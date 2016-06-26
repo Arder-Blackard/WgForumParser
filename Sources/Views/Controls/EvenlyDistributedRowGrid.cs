@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace ForumParserWPF.Views.Controls
+namespace ForumParser.Views.Controls
 {
     public class EvenlyDistributedRowGrid : Panel
     {

@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using ForumParserWPF.Models;
+using ForumParser.Models;
 using WpfCommon.ViewModels.Base;
 using Enumerable = System.Linq.Enumerable;
 
-namespace ForumParserWPF.ViewModels.Windows
+namespace ForumParser.ViewModels.Controls
 {
     public class TemplateViewModel : SimpleViewModelBase
     {

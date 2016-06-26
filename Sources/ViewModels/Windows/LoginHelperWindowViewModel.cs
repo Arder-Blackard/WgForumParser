@@ -3,10 +3,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using CefSharp;
-using ForumParserWPF.Services;
+using ForumParser.Services;
 using WpfCommon.ViewModels.Base;
 
-namespace ForumParserWPF.ViewModels.Windows
+namespace ForumParser.ViewModels.Windows
 {
     public class LoginHelperWindowViewModel : SimpleWindowViewModelBase
     {

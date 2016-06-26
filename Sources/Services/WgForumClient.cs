@@ -5,11 +5,10 @@ using System.IO;
 using System.Net;
 using System.Net.Mime;
 using System.Reflection;
-using System.Security.Authentication;
 using System.Text;
-using ForumParserWPF.Exceptions;
+using ForumParser.Exceptions;
 
-namespace ForumParserWPF.Services
+namespace ForumParser.Services
 {
     public class WgForumClient : WebClient
     {
