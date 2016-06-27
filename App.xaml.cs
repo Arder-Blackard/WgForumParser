@@ -55,7 +55,7 @@ namespace ForumParser
             container.RegisterSingleton( () => Settings.Default );
 
             //  Common services
-            container.RegisterSingleton<ILogger>( () => new WpfLogger() );
+            container.RegisterSingleton<ILogger, WpfLogger>();
             container.RegisterSingleton<CookieService>();
             container.RegisterSingleton<ForumTopicParser>();
 

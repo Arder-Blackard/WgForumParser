@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
@@ -283,7 +284,7 @@ namespace ForumParser.ViewModels.Windows
             var userIndex = _users.IndexOf( SelectedUser );
             if ( userIndex == -1 )
             {
-                Logger.Warning( $"Невозможно удалить пользователя {SelectedUser?.Name ?? "null"}." );
+                UiLogger.Warning( $"Невозможно удалить пользователя {SelectedUser?.Name ?? "null"}." );
                 return;
             }
 
@@ -377,7 +378,7 @@ namespace ForumParser.ViewModels.Windows
                 catch ( ForumParserException ex )
                 {
                     _viewProvider.ShowMessageBox( this, ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error );
-                    Logger.Error( ex.Message, ex );
+                    UiLogger.Error( ex.Message, ex );
                 }
             } );
         }
@@ -523,9 +524,9 @@ namespace ForumParser.ViewModels.Windows
 
         #region Initialization
 
-        public MainWindowViewModel( IViewProvider viewProvider, ForumTopicParser forumParser, ILogger logger ) : base( logger )
+        public MainWindowViewModel( IViewProvider viewProvider, ForumTopicParser forumParser, ILogger uiLogger ) : base( uiLogger )
         {
-            UiLogger = logger;
+            UiLogger = uiLogger;
             _viewProvider = viewProvider;
             _forumParser = forumParser;
             LoadForumTopicCommand = new AsyncDelegateCommand( LoadForumTopicCommandHandler );
@@ -618,13 +619,16 @@ namespace ForumParser.ViewModels.Windows
         {
             try
             {
-                Logger.Info( $"Сохранение результатов в файл '{filePath}'" );
-                var content = ForumTopic.Users.Where( user => !user.IsDeleted ).Select( user => $"{user.Name};{user.Mark}" ).JoinToString( "\r\n" );
-                File.WriteAllText( filePath, content );
+                UiLogger.Info( $"Сохранение результатов в файл '{filePath}'" );
+
+                var users = ForumTopic.Users.Where( user => !user.IsDeleted ).Select( user => $"{user.Name};{user.Mark}" );
+                var content = "Ники;Баллы".AppendSequence( users ).JoinToString( "\r\n" );
+
+                File.WriteAllText( filePath, content, new UTF8Encoding( true ) );
             }
             catch ( IOException ex )
             {
-                Logger.Error( $"Ошибка при сохранении CSV-файла '{filePath}'", ex );
+                UiLogger.Error( $"Ошибка при сохранении CSV-файла '{filePath}'", ex );
             }
         }
 
@@ -632,14 +636,16 @@ namespace ForumParser.ViewModels.Windows
         {
             try
             {
-                Logger.Info( $"Сохранение результатов в файл '{filePath}'" );
-                var content = topicName.AppendSequence( ForumTopic.Users.Where( user => !user.IsDeleted ).Select( user => $"{user.Name} {user.Mark}" ) )
-                                       .JoinToString( "\r\n" );
-                File.WriteAllText( filePath, content );
+                UiLogger.Info( $"Сохранение результатов в файл '{filePath}'" );
+
+                var users = ForumTopic.Users.Where( user => !user.IsDeleted ).Select( user => $"{user.Name} {user.Mark}" );
+                var content = $"{topicName}\r\n{"Ники Баллы"}".AppendSequence( users ).JoinToString( "\r\n" );
+
+                File.WriteAllText( filePath, content, new UTF8Encoding( true ) );
             }
             catch ( IOException ex )
             {
-                Logger.Error( $"Ошибка при сохранении TXT-файла '{filePath}'", ex );
+                UiLogger.Error( $"Ошибка при сохранении TXT-файла '{filePath}'", ex );
             }
         }
 
