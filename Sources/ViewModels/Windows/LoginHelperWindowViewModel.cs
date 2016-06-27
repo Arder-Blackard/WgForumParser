@@ -19,6 +19,8 @@ namespace ForumParser.ViewModels.Windows
         private ILoadHandler _loadHandler;
 
         private string _sessionId;
+        private string _address;
+        private string _initialAddress;
 
         #endregion
 
@@ -61,6 +63,22 @@ namespace ForumParser.ViewModels.Windows
             }
         }
 
+        public string Address
+        {
+            get { return _address; }
+            set { SetValue( ref _address, value ); }
+        }
+
+        public string InitialAddress
+        {
+            get { return _initialAddress; }
+            set
+            {
+                _initialAddress = new Uri( value ).GetComponents( UriComponents.SchemeAndServer, UriFormat.Unescaped );
+                Address = value;
+            }
+        }
+
         #endregion
 
 
@@ -81,12 +99,12 @@ namespace ForumParser.ViewModels.Windows
 
         private void CefLoadHandler_MainFrameUrlLoaded( string url )
         {
-            if ( string.Equals( url, "http://supertest.worldoftanks.com/", StringComparison.OrdinalIgnoreCase ) )
+            if ( string.Equals( new Uri( url ).GetComponents( UriComponents.SchemeAndServer, UriFormat.Unescaped ), /*"http://supertest.worldoftanks.com/"*/ _initialAddress, StringComparison.OrdinalIgnoreCase ) )
             {
                 var dispatcher = Dispatcher.CurrentDispatcher;
                 Task.Run( async () =>
                 {
-                    var cookies = await _cookieService.GetCookies( "http://supertest.worldoftanks.com/" );
+                    var cookies = await _cookieService.GetCookies( _initialAddress + "/" /*"http://supertest.worldoftanks.com/"*/ );
                     var sessionIdCookie = cookies.FirstOrDefault( c => c.Name == "frm_session_id" );
                     if ( sessionIdCookie != null && sessionIdCookie.Value.Length > 50 )
                     {

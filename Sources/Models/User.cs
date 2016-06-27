@@ -13,6 +13,7 @@
         public bool HasDeletedPost { get; set; }
         public int Mark { get; set; }
         public bool IsDeleted { get; set; }
+        public string FeedbackUrl { get; set; }
 
         #endregion
 

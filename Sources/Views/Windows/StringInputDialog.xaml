@@ -8,16 +8,19 @@
                 xmlns:windows="clr-namespace:ForumParser.ViewModels.Windows"
                 mc:Ignorable="d"
                 d:DataContext="{d:DesignInstance d:Type=windows:StringInputDialogViewModel, IsDesignTimeCreatable=True}"
-                Title="{Binding ViewTitle}" Width="300" SizeToContent="Height" MinWidth="360" MinHeight="120"
+                Title="{Binding ViewTitle}" Width="300" MinWidth="360" MinHeight="120"
                 ResizeMode="NoResize"
-                Icon="/Resources/icons/FP.png">
+                Icon="/Resources/icons/FP.png"
+                WindowStartupLocation="CenterOwner"
+                DropShadow="True"
+                 Loaded="StringInputDialog_Loaded">
     <FrameworkElement.Resources>
         <Style TargetType="Button">
             <Setter Property="MinWidth" Value="80" />
             <Setter Property="Margin" Value="8" />
         </Style>
     </FrameworkElement.Resources>
-    <StackPanel>
+    <StackPanel Margin="4">
         <TextBlock Text="{Binding Description}" Margin="8" HorizontalAlignment="Stretch"/>
         <TextBox Text="{Binding StringInput}" Margin="8" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0">

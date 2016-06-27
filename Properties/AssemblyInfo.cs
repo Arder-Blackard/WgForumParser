@@ -8,9 +8,9 @@ using System.Windows;
 [assembly: AssemblyTitle("ForumParser v.2")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Wargaming.net")]
 [assembly: AssemblyProduct("ForumParser v.2")]
-[assembly: AssemblyCopyright("Copyright ©  2016")]
+[assembly: AssemblyCopyright("Copyright © Wargaming.net 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

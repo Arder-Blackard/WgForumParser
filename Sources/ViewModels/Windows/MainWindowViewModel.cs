@@ -317,7 +317,11 @@ namespace ForumParser.ViewModels.Windows
 
             if ( SessionId == null )
             {
-                var login = _viewProvider.Show<LoginHelperWindowViewModel>( this );
+                var login = _viewProvider.Show<LoginHelperWindowViewModel>( this, loginHelper =>
+                {
+                    loginHelper.InitialAddress = TopicUrl;
+                } );
+
                 if ( login.Result != true )
                     return;
 
@@ -390,7 +394,7 @@ namespace ForumParser.ViewModels.Windows
         {
             Execute( () =>
             {
-                if ( !SaveTxt && !SaveTxt )
+                if ( !SaveTxt && !SaveCsv )
                 {
                     _viewProvider.ShowMessageBox( this, "Не выбран ни один из форматов сохранения.", "Ошибка сохранения",
                                                   MessageBoxButton.OK, MessageBoxImage.Asterisk );

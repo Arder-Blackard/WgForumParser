@@ -58,7 +58,7 @@
         </Border>
         <controls:CefWebBrowser Grid.Row="1"
                                 x:Name="WebBrowser"
-                                Address="http://supertest.worldoftanks.com"
+                                Address="{Binding Address}"
                                 LoadHandler="{Binding LoadHandler}" />
 
     </Grid>
