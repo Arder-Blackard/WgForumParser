@@ -32,8 +32,9 @@ namespace ForumParser.Services
     {
         #region Auto-properties
 
-        public ICollection<string> Administrators { get; set; } = new List<string> { "Администратор", "Разработчики" };
-        public IEnumerable<string> Coordinators { get; set; } = new List<string> { "Координаторы" };
+        public ICollection<string> Administrators { get; set; } = new HashSet<string>( StringComparer.OrdinalIgnoreCase ) { "Администратор", "Разработчики" };
+        public ICollection<string> Coordinators { get; set; } = new HashSet<string>( StringComparer.OrdinalIgnoreCase ) { "Координаторы" };
+        public ICollection<string> DeletedPosts { get; set; } = new HashSet<string>( StringComparer.OrdinalIgnoreCase ) { "del", "delete" };
 
         #endregion
     }
@@ -136,22 +137,19 @@ namespace ForumParser.Services
 
             private async Task<ForumTopic> ParseFullTopicAsync( string topicUrl, ForumTopic forumTopic )
             {
-                _logger?.Info( "Загрузка отзывов" );
+                _logger?.Info( "Загрузка отзывов..." );
 
                 var documents = await LoadForumTopicPages( topicUrl );
 
                 forumTopic.Name = documents.Select( ParseTopicName ).FirstOrDefault( name => name != null );
 
-//                if (forumTopic.Name == null)
-//                    throw new ForumParserException("Невозможно найти имя темы. ");
-
                 _logger?.Info( $"Имя темы: {forumTopic.Name ?? "<не определено>"}" );
 
-                _logger?.Info( "Анализ отзывов" );
+                _logger?.Info( "Анализ отзывов..." );
 
                 documents.ForEach( ParseFeedbacks );
 
-                _logger?.Info( "Анализ голосования" );
+                _logger?.Info( "Анализ голосования..." );
 
                 forumTopic.Poll = ParsePoll( documents[0] );
                 if ( forumTopic.Poll == null )
@@ -160,7 +158,7 @@ namespace ForumParser.Services
                     forumTopic.Poll = pollResultsLink != null ? ParsePoll( await _browsingContext.OpenAsync( pollResultsLink ) ) : new Poll();
                 }
 
-                _logger?.Info( "Сбор данных о пользователях" );
+                _logger?.Info( "Сбор данных о пользователях..." );
 
                 forumTopic.Users = _users.Values.OrderBy( user => user.Name ).ToList();
 
@@ -174,7 +172,7 @@ namespace ForumParser.Services
 
             private async Task<ForumTopic> ParsePollOnlyAsync( string topicUrl, ForumTopic forumTopic )
             {
-                _logger?.Info( "Загрузка голосования" );
+                _logger?.Info( "Загрузка голосования..." );
 
                 var document = await _browsingContext.OpenAsync( topicUrl );
                 forumTopic.Poll = ParsePoll(document);
@@ -184,7 +182,7 @@ namespace ForumParser.Services
                     forumTopic.Poll = pollResultsLink != null ? ParsePoll(await _browsingContext.OpenAsync(pollResultsLink)) : new Poll();
                 }
 
-                _logger?.Info("Сбор данных о пользователях");
+                _logger?.Info("Сбор данных о пользователях...");
 
                 forumTopic.Users = _users.Values.OrderBy(user => user.Name).ToList();
 
@@ -197,6 +195,11 @@ namespace ForumParser.Services
                 return forumTopic;
             }
 
+            /// <summary>
+            ///     Reads topic name from the block.
+            /// </summary>
+            /// <param name="document"></param>
+            /// <returns></returns>
             private string ParseTopicName( IDocument document )
             {
                 return document.QuerySelector( "h1.ipsType_pagetitle" )?.TextContent.Trim();
@@ -233,30 +236,36 @@ namespace ForumParser.Services
                 if ( userId == null )
                     return;
 
+                //  Get and check the name and the group of the user
                 var userGroup = post.QuerySelector("li.group_title span")?.TextContent ?? string.Empty;
                 var userName = post.QuerySelector("span[itemprop=name]")?.TextContent ?? string.Empty;
 
-                if ( _options.ExcludeAdministrators && _settings.Administrators.Contains( userGroup ) ||
-                     _options.ExcludeCoordinators && _settings.Coordinators.Contains( userGroup ) )
-                {
+                if ( _options.ExcludeAdministrators && _settings.Administrators.Contains( userGroup ) )
                     return;
-                }
 
-                var user = _users.GetOrInsert( userId, () => new User { Id = userId, Name = userName, Group = userGroup } );
+                if ( _options.ExcludeCoordinators && _settings.Coordinators.Contains( userGroup ) )
+                    return;
 
-                foreach ( var postBlock in post.QuerySelectorAll( "div.post_body" ) )
-                {
-                    if ( postBlock.Id?.StartsWith( "postsDelete" ) != true )
-                    {
-                        var commentText = postBlock.QuerySelector( "div[itemprop=commentText]" );
-                        if ( string.Equals( commentText?.TextContent.Trim(), "DEL", StringComparison.OrdinalIgnoreCase ) )
-                            user.HasDeletedFeedback = true;
-                        else
-                            user.HasFeedback = true;
-                    }
-                    else
-                        user.HasDeletedPost = true;
-                }
+                //  Get and check the post content
+                var postBlock = post.QuerySelector( "div.post_body" );
+                var commentText = postBlock?.QuerySelector( "div[itemprop=commentText]" );
+
+                var isPostDeleted = postBlock?.Id?.StartsWith( "postsDelete", StringComparison.Ordinal ) == true;
+                var isFeedbackDeleted = !isPostDeleted && _settings.DeletedPosts.Contains( commentText?.TextContent.Trim() );
+                var userHasFeedback = postBlock != null && !isFeedbackDeleted;
+
+                if ( _options.ExcludeDeletedMessages && (isPostDeleted || isFeedbackDeleted) )
+                    return;
+
+                //  Create or update the user
+                var user = _users.GetOrInsert( userId, () => new User { Id = userId, Name = userName, Group = userGroup, } );
+
+                user.HasFeedback = userHasFeedback;
+                user.HasDeletedFeedback = isFeedbackDeleted;
+                user.HasDeletedPost = isPostDeleted;
+
+                if ( commentText != null )
+                    user.Messages.Add( new Message { IsDeleted = isFeedbackDeleted, Html = commentText.OuterHtml } );
             }
 
             private string ParseUserIdFromProfileLink( string profileLink )

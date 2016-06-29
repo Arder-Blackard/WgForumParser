@@ -1,4 +1,6 @@
-﻿namespace ForumParser.Models
+﻿using System.Collections.Generic;
+
+namespace ForumParser.Models
 {
     public class User
     {
@@ -14,13 +16,24 @@
         public int Mark { get; set; }
         public bool IsDeleted { get; set; }
         public string FeedbackUrl { get; set; }
+        public IList<Message> Messages { get; set; } = new List<Message>();
 
         #endregion
 
 
         #region Public methods
 
-        public override string ToString() => Name;
+        public override string ToString() => $"{Name} ({Messages?.Count ?? 0})";
+
+        #endregion
+    }
+
+    public class Message
+    {
+        #region Auto-properties
+
+        public string Html { get; set; }
+        public bool IsDeleted { get; set; }
 
         #endregion
     }

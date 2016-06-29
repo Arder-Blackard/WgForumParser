@@ -8,16 +8,28 @@ namespace ForumParser.Views.Controls
     {
         #region Constants
 
-        public static readonly DependencyProperty LoadHandlerProperty =
-            DependencyProperty.Register( "LoadHandler",
-                                         typeof (ILoadHandler),
-                                         typeof (CefWebBrowser),
-                                         new FrameworkPropertyMetadata( default(ILoadHandler), LoadHandler_PropertyChanged ) );
+        public static readonly DependencyProperty LoadHandlerProperty = DependencyProperty.Register(
+            "LoadHandler",
+            typeof (ILoadHandler),
+            typeof (CefWebBrowser),
+            new FrameworkPropertyMetadata( default(ILoadHandler), LoadHandler_PropertyChanged ) );
+
+        public static readonly DependencyProperty HtmlProperty = DependencyProperty.Register(
+            "Html",
+            typeof (string),
+            typeof (CefWebBrowser),
+            new FrameworkPropertyMetadata( default(string), ( d, args ) => (d as CefWebBrowser)?.LoadHtml( (args.NewValue as string) ?? "", "http://rendering/" ) ) );
 
         #endregion
 
 
         #region Properties
+
+        public string Html
+        {
+            get { return (string) GetValue( HtmlProperty ); }
+            set { SetValue( HtmlProperty, value ); }
+        }
 
         public new ILoadHandler LoadHandler
         {

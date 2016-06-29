@@ -1,4 +1,5 @@
-﻿using ForumParser.Models;
+﻿using System.Linq;
+using ForumParser.Models;
 using WpfCommon.ViewModels.Base;
 
 namespace ForumParser.ViewModels
@@ -17,6 +18,8 @@ namespace ForumParser.ViewModels
         public string Name => User.Name;
 
         public string Group => User.Group;
+
+        public string Message => User.Messages.Select( m => m.Html ).FirstOrDefault() ?? "";
 
         public int Mark
         {

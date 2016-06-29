@@ -15,7 +15,7 @@
                  mc:Ignorable="d"
                  Height="800" Width="1400" MinWidth="960" MinHeight="600"
                  d:DataContext="{d:DesignInstance d:Type={x:Type viewModels:MainWindowViewModel}, d:IsDesignTimeCreatable=True}"
-                 SnapsToDevicePixels="True"  Title="{Binding ViewTitle}"
+                 SnapsToDevicePixels="True" Title="{Binding ViewTitle}"
                  Background="{x:Static SystemColors.ControlBrush}"
                  Icon="/Resources/icons/FP.png">
     <Grid Margin="5">
@@ -24,7 +24,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="120"/>
+            <RowDefinition Height="120" />
         </Grid.RowDefinitions>
 
         <Grid.Resources>
@@ -120,7 +120,8 @@
                         <StackPanel Orientation="Horizontal">
                             <CheckBox Content="Исключать админов" IsChecked="{Binding ExcludeAdministrators}" />
                             <CheckBox Content="Исключать координаторов" IsChecked="{Binding ExcludeCoordinators}" />
-                            <CheckBox Content="Исключать удаленные сообщения" IsChecked="{Binding ExcludeDeletedMessages}" />
+                            <CheckBox Content="Исключать удаленные сообщения"
+                                      IsChecked="{Binding ExcludeDeletedMessages}" />
                             <CheckBox Content="Только голосование" IsChecked="{Binding ParsePollOnly}" />
                         </StackPanel>
                     </GroupBox>
@@ -143,7 +144,7 @@
                                         <Setter Property="Padding" Value="8,1" />
                                     </Style>
                                 </StackPanel.Resources>
-                                <Button Command="{Binding SaveFinalResultCommand}" Content="Сохранить..."/>
+                                <Button Command="{Binding SaveFinalResultCommand}" Content="Сохранить..." />
                                 <Grid Margin="5,0" />
                                 <CheckBox Content="TXT" IsChecked="{Binding SaveTxt}" />
                                 <CheckBox Content="CSV" IsChecked="{Binding SaveCsv}" />
@@ -155,22 +156,17 @@
             </Expander>
         </Border>
         <!-- Tables -->
-        <Grid Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,3,0,0" 
+        <Grid Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,3,0,0"
               IsEnabled="{Binding IsBusy, Converter={x:Static c:Converters.Not}}">
             <TabControl>
                 <TabItem Header="Фидбеки и голоса" Foreground="Blue">
                     <Grid>
-
-                        <Grid.RowDefinitions>
-                            <RowDefinition />
-                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="3*"></ColumnDefinition>
-                            <ColumnDefinition Width="Auto"></ColumnDefinition>
-                            <ColumnDefinition Width="Auto"></ColumnDefinition>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="320" />
                         </Grid.ColumnDefinitions>
-
-                        <Grid>
+                        <Grid Grid.Column="0">
                             <Grid.Resources>
                                 <Style TargetType="Button">
                                     <Setter Property="Margin" Value="3" />
@@ -216,7 +212,8 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <!-- All users -->
-                            <DataGrid x:Name="AllUsersGrid" ItemsSource="{Binding AllUsers}" SelectedItem="{Binding SelectedUser}"
+                            <DataGrid x:Name="AllUsersGrid" ItemsSource="{Binding AllUsers}"
+                                      SelectedItem="{Binding SelectedUser}"
                                       PreviewKeyDown="UsersGrid_PreviewKeyDown">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
@@ -226,13 +223,13 @@
                                             </DataTemplate>
                                         </DataGridTextColumn.HeaderTemplate>
                                     </DataGridTextColumn>
-<!--                                    <DataGridTextColumn Width="*" Binding="{Binding Group}" IsReadOnly="True">-->
-<!--                                        <DataGridTextColumn.HeaderTemplate>-->
-<!--                                            <DataTemplate>-->
-<!--                                                <TextBlock Text="Имя" HorizontalAlignment="Stretch" />-->
-<!--                                            </DataTemplate>-->
-<!--                                        </DataGridTextColumn.HeaderTemplate>-->
-<!--                                    </DataGridTextColumn>-->
+                                    <!--                                    <DataGridTextColumn Width="*" Binding="{Binding Group}" IsReadOnly="True">-->
+                                    <!--                                        <DataGridTextColumn.HeaderTemplate>-->
+                                    <!--                                            <DataTemplate>-->
+                                    <!--                                                <TextBlock Text="Имя" HorizontalAlignment="Stretch" />-->
+                                    <!--                                            </DataTemplate>-->
+                                    <!--                                        </DataGridTextColumn.HeaderTemplate>-->
+                                    <!--                                    </DataGridTextColumn>-->
                                     <DataGridTextColumn Width="90" Binding="{Binding Mark}">
                                         <DataGridTextColumn.HeaderTemplate>
                                             <DataTemplate>
@@ -256,9 +253,11 @@
 
                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="3,0" Orientation="Horizontal">
                                 <Button Height="24" Width="24" Margin="3" Padding="0"
-                                        Command="{Binding CopyUsersWithMarksCommand}" CommandParameter="{Binding AllUsers}">
+                                        Command="{Binding CopyUsersWithMarksCommand}"
+                                        CommandParameter="{Binding AllUsers}">
                                     <Button.Content>
-                                        <Image Source="/Resources/icons/copy16.png" Stretch="None" SnapsToDevicePixels="True"/>
+                                        <Image Source="/Resources/icons/copy16.png" Stretch="None"
+                                               SnapsToDevicePixels="True" />
                                     </Button.Content>
                                 </Button>
                                 <Button Height="24" Width="24" Margin="3,0"
@@ -291,7 +290,8 @@
 
                             <StackPanel Grid.Row="1" Grid.Column="1" Margin="3,0" Orientation="Horizontal">
                                 <Button Height="24" Width="24" Margin="3"
-                                        Command="{Binding CopyUsersWithoutMarksCommand}" CommandParameter="{Binding VotedUsers}">
+                                        Command="{Binding CopyUsersWithoutMarksCommand}"
+                                        CommandParameter="{Binding VotedUsers}">
                                     <Button.Content>
                                         <Image Source="/Resources/icons/copy16.png" Stretch="None" />
                                     </Button.Content>
@@ -314,7 +314,8 @@
 
                             <StackPanel Grid.Row="1" Grid.Column="2" Margin="3,0" Orientation="Horizontal">
                                 <Button Height="24" Width="24" Margin="3"
-                                        Command="{Binding CopyUsersWithoutMarksCommand}" CommandParameter="{Binding UsersWithVoteAndFeedback}">
+                                        Command="{Binding CopyUsersWithoutMarksCommand}"
+                                        CommandParameter="{Binding UsersWithVoteAndFeedback}">
                                     <Button.Content>
                                         <Image Source="/Resources/icons/copy16.png" Stretch="None" />
                                     </Button.Content>
@@ -337,7 +338,8 @@
 
                             <StackPanel Grid.Row="1" Grid.Column="3" Margin="3,0" Orientation="Horizontal">
                                 <Button Height="24" Width="24" Margin="3"
-                                        Command="{Binding CopyUsersWithoutMarksCommand}" CommandParameter="{Binding UsersWithVoteOnly}">
+                                        Command="{Binding CopyUsersWithoutMarksCommand}"
+                                        CommandParameter="{Binding UsersWithVoteOnly}">
                                     <Button.Content>
                                         <Image Source="/Resources/icons/copy16.png" Stretch="None" />
                                     </Button.Content>
@@ -360,7 +362,8 @@
 
                             <StackPanel Grid.Row="1" Grid.Column="4" Margin="3,0" Orientation="Horizontal">
                                 <Button Height="24" Width="24" Margin="3"
-                                        Command="{Binding CopyUsersWithoutMarksCommand}" CommandParameter="{Binding UsersWithFeedbackOnly}">
+                                        Command="{Binding CopyUsersWithoutMarksCommand}"
+                                        CommandParameter="{Binding UsersWithFeedbackOnly}">
                                     <Button.Content>
                                         <Image Source="/Resources/icons/copy16.png" Stretch="None" />
                                     </Button.Content>
@@ -368,8 +371,11 @@
                             </StackPanel>
 
                         </Grid>
-
-                        <controls:CefWebBrowser Address="{Binding AllUsers}"></controls:CefWebBrowser>
+<!--                        <GridSplitter Grid.Column="1" ShowsPreview="False" ResizeDirection="Columns" Width="6" VerticalAlignment="Stretch" />-->
+<!--                        <Grid Grid.Column="2">-->
+<!--                            <TextBlock Text="{Binding SelectedUser.Message}" />-->
+<!--                        </Grid>-->
+                        <controls:CefWebBrowser  Grid.Column="2" Html="{Binding SelectedUser.Message}"></controls:CefWebBrowser>
                     </Grid>
                 </TabItem>
                 <TabItem Header="Графики голосования (не реализовано)">
@@ -384,7 +390,8 @@
                                 <TextBlock VerticalAlignment="Center" Margin="0,0,5,0">Шаблон:</TextBlock>
                                 <Button Padding="6,2" Margin="3" Content="Загрузить..." />
                                 <Button Padding="6,2" Margin="3" Content="Сохранить..." />
-                                <Button Padding="6,2" Margin="3" Content="Редактировать..." Command="{Binding EditTemplateCommand}" />
+                                <Button Padding="6,2" Margin="3" Content="Редактировать..."
+                                        Command="{Binding EditTemplateCommand}" />
                                 <TextBlock VerticalAlignment="Center" Margin="5,0,5,0">Графики:</TextBlock>
                                 <Button Padding="6,2" Margin="3" Content="Сохранить..." />
                             </StackPanel>
@@ -403,7 +410,8 @@
         </Grid>
 
         <GridSplitter Grid.Row="2" ShowsPreview="False" ResizeDirection="Rows" HorizontalAlignment="Stretch" Height="6" />
-        <Path SnapsToDevicePixels="True" Grid.Row="2" Canvas.ZIndex="45" HorizontalAlignment="Center" VerticalAlignment="Center"
+        <Path SnapsToDevicePixels="True" Grid.Row="2" Canvas.ZIndex="45" HorizontalAlignment="Center"
+              VerticalAlignment="Center"
               Stroke="Black" StrokeThickness="1"
               Data="M0,1L16,1M0,3L16,3" />
 
@@ -414,10 +422,11 @@
             </Border.Resources>
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"></RowDefinition>
-                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="1,1,1,0" Background="{x:Static SystemColors.ControlBrush}">
+                <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="1,1,1,0"
+                        Background="{x:Static SystemColors.ControlBrush}">
                     <TextBlock x:Name="LogDisplayModeToggle" Text="Лог" Padding="5,1" />
                 </Border>
                 <!-- Log -->
@@ -427,12 +436,12 @@
                          VirtualizingPanel.IsVirtualizing="True"
                          VirtualizingPanel.IsContainerVirtualizable="True"
                          VirtualizingPanel.VirtualizationMode="Recycling"
-                         VirtualizingPanel.CacheLength="100"
-                         >
+                         VirtualizingPanel.CacheLength="100">
                     <i:Interaction.Behaviors>
-                        <behaviors:AutoScroller x:Name="AutoScroll" AutoScrollTrigger="{Binding UiLogger.Entries}" AutoScroll="True" />
+                        <behaviors:AutoScroller x:Name="AutoScroll" AutoScrollTrigger="{Binding UiLogger.Entries}"
+                                                AutoScroll="True" />
                     </i:Interaction.Behaviors>
-                    
+
                     <ListBox.ItemTemplate>
                         <DataTemplate DataType="logging:LogEntryBase">
                             <TextBlock FontFamily="Consolas" FontStretch="Condensed"
