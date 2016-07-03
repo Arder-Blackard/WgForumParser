@@ -1,11 +1,18 @@
-﻿using System.Linq;
-using ForumParser.Models;
+﻿using ForumParser.Models;
+using ForumParser.Utils;
 using WpfCommon.ViewModels.Base;
 
 namespace ForumParser.ViewModels
 {
     public class UserViewModel : SimpleViewModelBase
     {
+        #region Fields
+
+        private string _cachedMessage;
+
+        #endregion
+
+
         #region Auto-properties
 
         public User User { get; }
@@ -19,7 +26,16 @@ namespace ForumParser.ViewModels
 
         public string Group => User.Group;
 
-        public string Message => User.Messages.Select( m => m.Html ).FirstOrDefault() ?? "";
+        public string Message
+        {
+            get
+            {
+                if ( _cachedMessage == null )
+                    _cachedMessage = HtmlFormatter.FormatUserMessages( User.Messages );
+
+                return _cachedMessage;
+            }
+        }
 
         public int Mark
         {

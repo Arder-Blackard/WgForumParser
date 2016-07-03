@@ -164,7 +164,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition />
                             <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="320" />
+                            <ColumnDefinition Width="640" />
                         </Grid.ColumnDefinitions>
                         <Grid Grid.Column="0">
                             <Grid.Resources>
@@ -371,11 +371,10 @@
                             </StackPanel>
 
                         </Grid>
-<!--                        <GridSplitter Grid.Column="1" ShowsPreview="False" ResizeDirection="Columns" Width="6" VerticalAlignment="Stretch" />-->
-<!--                        <Grid Grid.Column="2">-->
-<!--                            <TextBlock Text="{Binding SelectedUser.Message}" />-->
-<!--                        </Grid>-->
-                        <controls:CefWebBrowser  Grid.Column="2" Html="{Binding SelectedUser.Message}"></controls:CefWebBrowser>
+                        <GridSplitter Grid.Column="1" ShowsPreview="False" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Width="6" VerticalAlignment="Stretch" />
+                        <GroupBox Grid.Column="2" Header="Сообщения ползователя">
+                            <controls:CefWebBrowser Html="{Binding SelectedUser.Message}"></controls:CefWebBrowser>
+                        </GroupBox>
                     </Grid>
                 </TabItem>
                 <TabItem Header="Графики голосования (не реализовано)">

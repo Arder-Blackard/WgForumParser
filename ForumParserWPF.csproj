@@ -131,6 +131,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Sources\ViewModels\Controls\PollQuestionChartViewModel.cs" />
+    <Compile Include="Sources\Utils\HtmlFormatter.cs" />
     <Compile Include="Sources\ViewModels\Windows\StringInputDialogViewModel.cs" />
     <Compile Include="Sources\Views\Behaviors\AutoScroller.cs" />
     <Compile Include="Sources\Views\Controls\HotspotContainer.cs" />
