@@ -63,7 +63,7 @@ namespace ForumParser.Services
         {
             #region Constants
 
-            private static readonly Regex PollAnswerVotesCount = new Regex( @".*?(?<value>\d+)\s+vote", RegexOptions.IgnoreCase );
+            private static readonly Regex PollAnswerVotesCount = new Regex( @".*?(?<value>\d+)\s+(vote|голос)", RegexOptions.IgnoreCase );
 
             private static readonly Regex PollAnswerVotesUserIds = new Regex( @"<a\s+href='(?<link>.*?)'>.*<span.*?>(?<name>.*?)<\/span>.*<\/a>",
                                                                               RegexOptions.IgnoreCase | RegexOptions.Multiline );
@@ -85,6 +85,7 @@ namespace ForumParser.Services
             private readonly string _topicUrl;
 
             private readonly Dictionary<string, User> _users = new Dictionary<string, User>();
+            private readonly List<User> _usersList = new List<User>();
 
             #endregion
 
@@ -160,7 +161,7 @@ namespace ForumParser.Services
 
                 _logger?.Info( "Сбор данных о пользователях..." );
 
-                forumTopic.Users = _users.Values.OrderBy( user => user.Name ).ToList();
+                forumTopic.Users = _usersList;
 
                 if ( forumTopic.Users.Count == 0 && forumTopic.Poll.Questions.Count == 0 )
                     _logger?.Info( "Не найдены данные, соответствующие формату темы форума" );
@@ -182,9 +183,9 @@ namespace ForumParser.Services
                     forumTopic.Poll = pollResultsLink != null ? ParsePoll(await _browsingContext.OpenAsync(pollResultsLink)) : new Poll();
                 }
 
-                _logger?.Info("Сбор данных о пользователях...");
+                _logger?.Info( "Сбор данных о пользователях..." );
 
-                forumTopic.Users = _users.Values.OrderBy(user => user.Name).ToList();
+                forumTopic.Users = _usersList;
 
                 if (forumTopic.Users.Count == 0 && forumTopic.Poll.Questions.Count == 0)
                     _logger?.Info("Не найдены данные, соответствующие формату темы форума");
@@ -258,7 +259,7 @@ namespace ForumParser.Services
                     return;
 
                 //  Create or update the user
-                var user = _users.GetOrInsert( userId, () => new User { Id = userId, Name = userName, Group = userGroup, } );
+                var user = GetOrInsertUser( userId, () => new User { Id = userId, Name = userName, Group = userGroup, } );
 
                 user.HasFeedback = userHasFeedback;
                 user.HasDeletedFeedback = isFeedbackDeleted;
@@ -266,6 +267,18 @@ namespace ForumParser.Services
 
                 if ( commentText != null )
                     user.Messages.Add( new Message { IsDeleted = isFeedbackDeleted, Html = commentText.OuterHtml } );
+            }
+
+            private User GetOrInsertUser( string userId, Func<User> generator )
+            {
+                var user = _users.GetOrDefault( userId );
+                if ( user == null )
+                {
+                    user = generator();
+                    _users[userId] = user;
+                    _usersList.Add( user );
+                }
+                return user;
             }
 
             private string ParseUserIdFromProfileLink( string profileLink )
@@ -340,7 +353,7 @@ namespace ForumParser.Services
                     foreach ( Match match in PollAnswerVotesUserIds.Matches( popupScript.TextContent ) )
                     {
                         var userId = ParseUserIdFromProfileLink( match.Groups["link"].Value );
-                        var user = _users.GetOrInsert( userId, () => new User { Id = userId } );
+                        var user = GetOrInsertUser( userId, () => new User { Id = userId } );
                         user.Name = match.Groups["name"].Value;
                         user.HasVote = true;
 

@@ -281,6 +281,9 @@ namespace ForumParser.ViewModels.Windows
         /// </summary>
         private void DeleteSelectedUserCommandHandler()
         {
+            if ( SelectedUser == null )
+                return;
+
             var userIndex = _users.IndexOf( SelectedUser );
             if ( userIndex == -1 )
             {
@@ -309,18 +312,28 @@ namespace ForumParser.ViewModels.Windows
         /// <returns></returns>
         private async Task LoadForumTopicCommandHandler()
         {
-            if ( string.IsNullOrEmpty( TopicUrl?.Trim() ) )
+            var topicUrl = TopicUrl;
+
+            if ( string.IsNullOrEmpty( topicUrl?.Trim() ) )
             {
                 _viewProvider.ShowMessageBox( this, "Не задан URL темы.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error );
                 return;
             }
 
+            //  Start from the first page
+            var pageNumberIndex = topicUrl.IndexOf( "page__st__", StringComparison.OrdinalIgnoreCase );
+            if ( pageNumberIndex == -1 )
+                pageNumberIndex = topicUrl.IndexOf( "page__mode__show__st__", StringComparison.OrdinalIgnoreCase );
+
+            if ( pageNumberIndex > -1 )
+            {
+                topicUrl = topicUrl.Substring( 0, pageNumberIndex );
+                UiLogger.Warning( $"URL темы указывает не на первую страницу. Разбор темы будет начат со страницы {topicUrl}" );
+            }
+
             if ( SessionId == null )
             {
-                var login = _viewProvider.Show<LoginHelperWindowViewModel>( this, loginHelper =>
-                {
-                    loginHelper.InitialAddress = TopicUrl;
-                } );
+                var login = _viewProvider.Show<LoginHelperWindowViewModel>( this, loginHelper => loginHelper.InitialAddress = topicUrl );
 
                 if ( login.Result != true )
                     return;
@@ -333,7 +346,7 @@ namespace ForumParser.ViewModels.Windows
                 try
                 {
                     ForumTopic = await _forumParser.Parse(
-                        TopicUrl,
+                        topicUrl,
                         SessionId,
                         new ParserSettings(),
                         new ParseOptions
@@ -543,7 +556,6 @@ namespace ForumParser.ViewModels.Windows
             DeleteSelectedUserCommand = new DelegateCommand( DeleteSelectedUserCommandHandler );
             SaveFinalResultCommand = new DelegateCommand( SaveFinalResultCommandHandler );
             UndoDeleteUserCommand = new DelegateCommand( UndoDeleteUserCommandHandler );
-
         }
 
         #endregion

@@ -110,11 +110,11 @@
                             <ColumnDefinition />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Margin="3" VerticalAlignment="Center">Url темы:</TextBlock>
+                        <TextBlock Grid.Column="0" Margin="3" VerticalAlignment="Center">URL темы:</TextBlock>
                         <TextBox Grid.Column="1" Margin="3" Text="{Binding TopicUrl}" HorizontalAlignment="Stretch"
                                  VerticalContentAlignment="Center" />
                         <Button Grid.Column="2" Margin="3" Command="{Binding LoadForumTopicCommand}" Padding="8,1"
-                                Content="Обработка" />
+                                Content="Загрузить тему" />
                     </Grid>
                     <GroupBox Grid.Row="1" Header="Опции чтения темы" Padding="-1,6,3,3" BorderBrush="DarkGray">
                         <StackPanel Orientation="Horizontal">
@@ -166,7 +166,7 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="640" />
                         </Grid.ColumnDefinitions>
-                        <Grid Grid.Column="0">
+                        <Grid Grid.Column="0" IsEnabled="{Binding ForumTopic, Converter={StaticResource ForumTopicDependentEnabled}, ConverterParameter={x:Null}}">
                             <Grid.Resources>
                                 <Style TargetType="Button">
                                     <Setter Property="Margin" Value="3" />
@@ -372,7 +372,7 @@
 
                         </Grid>
                         <GridSplitter Grid.Column="1" ShowsPreview="False" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Width="6" VerticalAlignment="Stretch" />
-                        <GroupBox Grid.Column="2" Header="Сообщения ползователя">
+                        <GroupBox Grid.Column="2" Header="Сообщения пользователя">
                             <controls:CefWebBrowser Html="{Binding SelectedUser.Message}"></controls:CefWebBrowser>
                         </GroupBox>
                     </Grid>

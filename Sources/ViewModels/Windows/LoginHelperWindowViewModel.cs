@@ -20,7 +20,7 @@ namespace ForumParser.ViewModels.Windows
 
         private string _sessionId;
         private string _address;
-        private string _initialAddress;
+        private string _rootAddress;
 
         #endregion
 
@@ -69,13 +69,18 @@ namespace ForumParser.ViewModels.Windows
             set { SetValue( ref _address, value ); }
         }
 
+        public string RootAddress
+        {
+            get { return _rootAddress; }
+            set { SetValue( ref _rootAddress, value ); }
+        }
+
         public string InitialAddress
         {
-            get { return _initialAddress; }
             set
             {
-                _initialAddress = new Uri( value ).GetComponents( UriComponents.SchemeAndServer, UriFormat.Unescaped );
                 Address = value;
+                RootAddress = new Uri( value ).GetComponents( UriComponents.SchemeAndServer, UriFormat.Unescaped );
             }
         }
 
@@ -99,23 +104,23 @@ namespace ForumParser.ViewModels.Windows
 
         private void CefLoadHandler_MainFrameUrlLoaded( string url )
         {
-            if ( string.Equals( new Uri( url ).GetComponents( UriComponents.SchemeAndServer, UriFormat.Unescaped ), /*"http://supertest.worldoftanks.com/"*/ _initialAddress, StringComparison.OrdinalIgnoreCase ) )
+            //            if ( string.Equals( new Uri( url ).GetComponents( UriComponents.SchemeAndServer, UriFormat.Unescaped ), /*"http://supertest.worldoftanks.com/"*/ _initialAddress, StringComparison.OrdinalIgnoreCase ) )
+            //            {
+            var dispatcher = Dispatcher.CurrentDispatcher;
+            Task.Run( async () =>
             {
-                var dispatcher = Dispatcher.CurrentDispatcher;
-                Task.Run( async () =>
+                var cookies = await _cookieService.GetCookies( RootAddress + "/" /*"http://supertest.worldoftanks.com/"*/ );
+                var sessionIdCookie = cookies.FirstOrDefault( c => c.Name == "frm_session_id" );
+                if ( sessionIdCookie != null && sessionIdCookie.Value.Length > 50 )
                 {
-                    var cookies = await _cookieService.GetCookies( _initialAddress + "/" /*"http://supertest.worldoftanks.com/"*/ );
-                    var sessionIdCookie = cookies.FirstOrDefault( c => c.Name == "frm_session_id" );
-                    if ( sessionIdCookie != null && sessionIdCookie.Value.Length > 50 )
+                    dispatcher.Invoke( () =>
                     {
-                        dispatcher.Invoke( () =>
-                        {
-                            SessionId = sessionIdCookie.Value;
-                            IsLoginSuccessful = true;
-                        } );
-                    }
-                } );
-            }
+                        SessionId = sessionIdCookie.Value;
+                        IsLoginSuccessful = true;
+                    } );
+                }
+            } );
+            //            }
         }
 
         #endregion

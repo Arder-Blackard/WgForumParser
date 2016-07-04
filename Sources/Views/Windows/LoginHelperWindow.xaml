@@ -42,7 +42,7 @@
                            VerticalAlignment="Center"
                            Visibility="{Binding IsLoginSuccessful, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Visible}">
                     <Run>Выполните вход на сайт</Run>
-                    <Hyperlink Click="Hyperlink_Click">http://supertest.worldoftanks.com</Hyperlink>
+                    <Hyperlink Click="Hyperlink_Click"><Run Text ="{Binding RootAddress}"/></Hyperlink>
                     <Run>в окне ниже</Run>
                 </TextBlock>
                 <TextBlock Grid.Column="0" Margin="6,0"
