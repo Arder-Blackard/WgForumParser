@@ -219,7 +219,9 @@
                                     <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
                                         <DataGridTextColumn.HeaderTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="Имя" HorizontalAlignment="Stretch" />
+                                                <TextBlock HorizontalAlignment="Stretch">
+                                                    <Run Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.AllUsersCount, StringFormat=Пользователи ({0})}"></Run>
+                                                </TextBlock>
                                             </DataTemplate>
                                         </DataGridTextColumn.HeaderTemplate>
                                     </DataGridTextColumn>
@@ -256,8 +258,7 @@
                                         Command="{Binding CopyUsersWithMarksCommand}"
                                         CommandParameter="{Binding AllUsers}">
                                     <Button.Content>
-                                        <Image Source="/Resources/icons/copy16.png" Stretch="None"
-                                               SnapsToDevicePixels="True" />
+                                        <Image Source="/Resources/icons/copy16.png" Stretch="None" SnapsToDevicePixels="True" />
                                     </Button.Content>
                                 </Button>
                                 <Button Height="24" Width="24" Margin="3,0"
@@ -281,7 +282,9 @@
                                     <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
                                         <DataGridTextColumn.HeaderTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="Все проголосовавшие" HorizontalAlignment="Stretch" />
+                                                <TextBlock HorizontalAlignment="Stretch">
+                                                    <Run Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.VotedUsersCount, StringFormat=Все проголосовавшие ({0})}"></Run>
+                                                </TextBlock>
                                             </DataTemplate>
                                         </DataGridTextColumn.HeaderTemplate>
                                     </DataGridTextColumn>
@@ -304,8 +307,9 @@
                                     <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
                                         <DataGridTextColumn.HeaderTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="Голос + фидбек"
-                                                           HorizontalAlignment="Stretch" />
+                                                <TextBlock HorizontalAlignment="Stretch">
+                                                    <Run Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.UsersWithVoteAndFeedbackCount, StringFormat=Голос + фидбек ({0})}"></Run>
+                                                </TextBlock>
                                             </DataTemplate>
                                         </DataGridTextColumn.HeaderTemplate>
                                     </DataGridTextColumn>
@@ -328,8 +332,9 @@
                                     <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
                                         <DataGridTextColumn.HeaderTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="Только голос"
-                                                           HorizontalAlignment="Stretch" />
+                                                <TextBlock HorizontalAlignment="Stretch">
+                                                    <Run Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.UsersWithVoteOnlyCount, StringFormat=Только голос ({0})}"></Run>
+                                                </TextBlock>
                                             </DataTemplate>
                                         </DataGridTextColumn.HeaderTemplate>
                                     </DataGridTextColumn>
@@ -352,8 +357,9 @@
                                     <DataGridTextColumn Width="*" Binding="{Binding Name}" IsReadOnly="True">
                                         <DataGridTextColumn.HeaderTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="Фидбек без голоса"
-                                                           HorizontalAlignment="Stretch" />
+                                                <TextBlock HorizontalAlignment="Stretch">
+                                                    <Run Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.UsersWithFeedbackOnlyCount, StringFormat=Фидбек без голоса ({0})}"></Run>
+                                                </TextBlock>
                                             </DataTemplate>
                                         </DataGridTextColumn.HeaderTemplate>
                                     </DataGridTextColumn>

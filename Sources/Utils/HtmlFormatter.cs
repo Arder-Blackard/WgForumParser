@@ -95,6 +95,15 @@ p {
 h3, strong {
     font-weight: bold;
 }
+div.post ol, div.post ul, div.post dl {
+    padding: 0 40px;
+}
+div.post ol {
+    list-style-type: decimal;
+}
+ol, ul {
+    list-style: none;
+}
 </style>";
 
         #endregion

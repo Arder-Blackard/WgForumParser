@@ -65,7 +65,7 @@ namespace ForumParser.Services
 
             private static readonly Regex PollAnswerVotesCount = new Regex( @".*?(?<value>\d+)\s+(vote|голос)", RegexOptions.IgnoreCase );
 
-            private static readonly Regex PollAnswerVotesUserIds = new Regex( @"<a\s+href='(?<link>.*?)'>.*<span.*?>(?<name>.*?)<\/span>.*<\/a>",
+            private static readonly Regex PollAnswerVotesUserIds = new Regex( @"<a\s+href='(?<link>.*?)'>(?:(?:.*<span.*?>(?<name>.*?)<\/span>.*)|(?<name2>.*))<\/a>",
                                                                               RegexOptions.IgnoreCase | RegexOptions.Multiline );
 
             private static readonly Regex UserIdRegex = new Regex( @".*?(?<id>\d+)/", RegexOptions.IgnoreCase );
@@ -354,7 +354,7 @@ namespace ForumParser.Services
                     {
                         var userId = ParseUserIdFromProfileLink( match.Groups["link"].Value );
                         var user = GetOrInsertUser( userId, () => new User { Id = userId } );
-                        user.Name = match.Groups["name"].Value;
+                        user.Name = match.Groups["name"].Success ? match.Groups["name"].Value : match.Groups["name2"].Value;
                         user.HasVote = true;
 
                         users.Add( user );

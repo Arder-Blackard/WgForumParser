@@ -68,14 +68,19 @@ namespace ForumParser.ViewModels.Windows
 
         //  Data
         private ForumTopic _forumTopic;
-        private ICollectionView _allUsers;
         private string _viewTitle;
         private UserViewModel _selectedUser;
         private ObservableCollection<UserViewModel> _users;
+        private ICollectionView _allUsers;
         private ICollectionView _usersWithFeedbackOnly;
         private ICollectionView _usersWithVoteAndFeedback;
         private ICollectionView _usersWithVoteOnly;
         private ICollectionView _votedUsers;
+        private int _usersWithFeedbackOnlyCount;
+        private int _allUsersCount;
+        private int _usersWithVoteAndFeedbackCount;
+        private int _usersWithVoteOnlyCount;
+        private int _votedUsersCount;
 
         #endregion
 
@@ -179,6 +184,51 @@ namespace ForumParser.ViewModels.Windows
         {
             get { return _usersWithFeedbackOnly; }
             private set { SetValue( ref _usersWithFeedbackOnly, value ); }
+        }
+
+        /// <summary>
+        ///     All users view.
+        /// </summary>
+        public int AllUsersCount
+        {
+            get { return _allUsersCount; }
+            private set { SetValue( ref _allUsersCount, value ); }
+        }
+
+        /// <summary>
+        ///     Voted users view.
+        /// </summary>
+        public int VotedUsersCount
+        {
+            get { return _votedUsersCount; }
+            private set { SetValue( ref _votedUsersCount, value ); }
+        }
+
+        /// <summary>
+        ///     The view presenting users with both vote and feedback.
+        /// </summary>
+        public int UsersWithVoteAndFeedbackCount
+        {
+            get { return _usersWithVoteAndFeedbackCount; }
+            private set { SetValue( ref _usersWithVoteAndFeedbackCount, value ); }
+        }
+
+        /// <summary>
+        ///     The view presenting users with vote but without feedback.
+        /// </summary>
+        public int UsersWithVoteOnlyCount
+        {
+            get { return _usersWithVoteOnlyCount; }
+            private set { SetValue( ref _usersWithVoteOnlyCount, value ); }
+        }
+
+        /// <summary>
+        ///     The view presenting users with feedback but without vote.
+        /// </summary>
+        public int UsersWithFeedbackOnlyCount
+        {
+            get { return _usersWithFeedbackOnlyCount; }
+            private set { SetValue( ref _usersWithFeedbackOnlyCount, value ); }
         }
 
         /// <summary>
@@ -612,6 +662,12 @@ namespace ForumParser.ViewModels.Windows
             UsersWithVoteAndFeedback.Refresh();
             UsersWithVoteOnly.Refresh();
             UsersWithFeedbackOnly.Refresh();
+
+            AllUsersCount = _users.Where( AllUsersFilter ).Count();
+            VotedUsersCount = _users.Where( VotedUsersFilter ).Count();
+            UsersWithVoteAndFeedbackCount = _users.Where( UsersWithVoteAndFeedbackFilter ).Count();
+            UsersWithVoteOnlyCount = _users.Where( UsersWithVoteOnlyFilter ).Count();
+            UsersWithFeedbackOnlyCount = _users.Where( UsersWithFeedbackOnlyFilter ).Count();
         }
 
         private void Execute( Action action )
@@ -692,39 +748,54 @@ namespace ForumParser.ViewModels.Windows
         private void RecreateFilters()
         {
             AllUsers = CollectionViewSource.GetDefaultView( _users );
-            AllUsers.Filter = u =>
-            {
-                var user = (UserViewModel) u;
-                return !user.IsDeleted;
-            };
+            AllUsers.Filter = AllUsersFilter;
+            AllUsersCount = _users.Where( AllUsersFilter ).Count();
 
             VotedUsers = new CollectionViewSource { Source = _users }.View;
-            VotedUsers.Filter = u =>
-            {
-                var user = (UserViewModel) u;
-                return !user.IsDeleted && user.HasVote;
-            };
+            VotedUsers.Filter = VotedUsersFilter;
+            VotedUsersCount = _users.Where( VotedUsersFilter ).Count();
 
             UsersWithVoteAndFeedback = new CollectionViewSource { Source = _users }.View;
-            UsersWithVoteAndFeedback.Filter = u =>
-            {
-                var user = (UserViewModel) u;
-                return !user.IsDeleted && user.HasVoteAndFeedback;
-            };
+            UsersWithVoteAndFeedback.Filter = UsersWithVoteAndFeedbackFilter;
+            UsersWithVoteAndFeedbackCount = _users.Where(UsersWithVoteAndFeedbackFilter).Count();
 
             UsersWithVoteOnly = new CollectionViewSource { Source = _users }.View;
-            UsersWithVoteOnly.Filter = u =>
-            {
-                var user = (UserViewModel) u;
-                return !user.IsDeleted && user.HasVoteOnly;
-            };
+            UsersWithVoteOnly.Filter = UsersWithVoteOnlyFilter;
+            UsersWithVoteOnlyCount = _users.Where(UsersWithVoteOnlyFilter).Count();
 
             UsersWithFeedbackOnly = new CollectionViewSource { Source = _users }.View;
-            UsersWithFeedbackOnly.Filter = u =>
-            {
-                var user = (UserViewModel) u;
-                return !user.IsDeleted && user.HasFeedbackOnly;
-            };
+            UsersWithFeedbackOnly.Filter = UsersWithFeedbackOnlyFilter;
+            UsersWithFeedbackOnlyCount = _users.Where(UsersWithFeedbackOnlyFilter).Count();
+        }
+
+        private static bool UsersWithFeedbackOnlyFilter( object u )
+        {
+            var user = (UserViewModel) u;
+            return !user.IsDeleted && user.HasFeedbackOnly;
+        }
+
+        private static bool UsersWithVoteOnlyFilter( object u )
+        {
+            var user = (UserViewModel) u;
+            return !user.IsDeleted && user.HasVoteOnly;
+        }
+
+        private static bool UsersWithVoteAndFeedbackFilter( object u )
+        {
+            var user = (UserViewModel) u;
+            return !user.IsDeleted && user.HasVoteAndFeedback;
+        }
+
+        private static bool VotedUsersFilter( object u )
+        {
+            var user = (UserViewModel) u;
+            return !user.IsDeleted && user.HasVote;
+        }
+
+        private static bool AllUsersFilter( object u )
+        {
+            var user = (UserViewModel) u;
+            return !user.IsDeleted;
         }
 
         #endregion
