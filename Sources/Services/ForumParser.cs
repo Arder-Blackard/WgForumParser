@@ -39,7 +39,7 @@ namespace ForumParser.Services
         #endregion
     }
 
-    public sealed class ForumTopicParser
+    public sealed class ForumTopicParser : ISingletonService
     {
         #region Public methods
 

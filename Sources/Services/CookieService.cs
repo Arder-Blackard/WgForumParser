@@ -4,7 +4,7 @@ using CefSharp;
 
 namespace ForumParser.Services
 {
-    public sealed class CookieService
+    public sealed class CookieService : ISingletonService
     {
         #region Public methods
 

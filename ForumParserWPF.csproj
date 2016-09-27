@@ -130,8 +130,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Sources\Services\ISingletonService.cs" />
+    <Compile Include="Sources\Services\SettingsManager.cs" />
     <Compile Include="Sources\ViewModels\Controls\PollQuestionChartViewModel.cs" />
     <Compile Include="Sources\Utils\HtmlFormatter.cs" />
+    <Compile Include="Sources\Services\CefHandlers\CefLoadHandler.cs" />
+    <Compile Include="Sources\Services\CefHandlers\CefRequestHandler.cs" />
     <Compile Include="Sources\ViewModels\Windows\StringInputDialogViewModel.cs" />
     <Compile Include="Sources\Views\Behaviors\AutoScroller.cs" />
     <Compile Include="Sources\Views\Controls\HotspotContainer.cs" />
@@ -252,6 +256,7 @@
   <ItemGroup>
     <Resource Include="appicon.ico" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="packages\cef.redist.x64.3.2526.1362\build\cef.redist.x64.targets" Condition="Exists('packages\cef.redist.x64.3.2526.1362\build\cef.redist.x64.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

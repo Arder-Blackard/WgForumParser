@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using CommonLib.Logging;
 using ForumParser.Properties;
@@ -24,6 +26,9 @@ namespace ForumParser
         {
             base.OnStartup( e );
             var container = Bootstrap();
+
+            container.GetInstance<SettingsManager>().Load();
+
             ComposeObjects( container );
             Current.MainWindow.Show();
         }
@@ -51,13 +56,11 @@ namespace ForumParser
             //  View locator
             container.RegisterSingleton<IViewProvider, ViewProvider>();
 
-            //  Settings
-            container.RegisterSingleton( () => Settings.Default );
 
             //  Common services
             container.RegisterSingleton<ILogger, WpfLogger>();
-            container.RegisterSingleton<CookieService>();
-            container.RegisterSingleton<ForumTopicParser>();
+            foreach ( var type in typeof ( App ).Assembly.ExportedTypes.Where( type => !type.IsInterface && typeof ( ISingletonService ).IsAssignableFrom( type ) ).ToList() )
+                container.RegisterSingleton( type, type );
 
             //  ViewModels
             container.Register<MainWindowViewModel>();

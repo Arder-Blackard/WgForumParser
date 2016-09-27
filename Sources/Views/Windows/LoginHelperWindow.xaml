@@ -59,7 +59,8 @@
         <controls:CefWebBrowser Grid.Row="1"
                                 x:Name="WebBrowser"
                                 Address="{Binding Address}"
-                                LoadHandler="{Binding LoadHandler}" />
+                                LoadHandler="{Binding LoadHandler}"
+                                RequestHandler="{Binding RequestHandler}"/>
 
     </Grid>
 </base:WindowBase>
