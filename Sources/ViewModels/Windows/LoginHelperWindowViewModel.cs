@@ -145,7 +145,7 @@ namespace ForumParser.ViewModels.Windows
         {
             var result = await args.Frame.EvaluateScriptAsync( "document.querySelector(\".js-submit-title\").innerText" );
 
-//            await args.Frame.EvaluateScriptAsync( $"document.querySelector(\"[type='email']\").value = \"{_settingsManager.Settings.Email ?? ""}\"" );
+////            await args.Frame.EvaluateScriptAsync( $"document.querySelector(\"[type='email']\").value = \"{_settingsManager.Settings.Email ?? ""}\"" );
 
             var dispatcher = Dispatcher.CurrentDispatcher;
             await Task.Run( async () =>

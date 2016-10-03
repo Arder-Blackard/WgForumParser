@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using ForumParser.ViewModels.Controls;
 
 namespace ForumParser.Views.Controls
 {
@@ -37,8 +38,12 @@ namespace ForumParser.Views.Controls
             if ( _resizing )
             {
                 var desiredSize = _initialDelta + Mouse.GetPosition( this );
-                Width = Math.Max( desiredSize.X, 200 );
-                Height = Math.Max( desiredSize.Y, 200 );
+                var templateViewModel = DataContext as TemplateViewModel;
+                if ( templateViewModel != null )
+                {
+                    templateViewModel.Width = Math.Max( desiredSize.X, 200 );
+                    templateViewModel.Height = Math.Max( desiredSize.Y, 200 );
+                }
             }
         }
 
