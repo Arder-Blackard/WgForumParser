@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace ForumParser.Views.Extensions
@@ -26,6 +28,16 @@ namespace ForumParser.Views.Extensions
                     }
                 }
             }
+        }
+
+        public static TChildType FindChildOfType<TChildType>( this Visual element, bool recursive = false ) where TChildType : DependencyObject
+        {
+            return EnumerateChildren( element, recursive ).OfType<TChildType>().FirstOrDefault();
+        }
+
+        public static UIElement FindItemContainer( this ItemsControl itemsControl, object item )
+        {
+            return (UIElement) itemsControl.ItemContainerGenerator.ContainerFromItem( item );
         }
 
         #endregion

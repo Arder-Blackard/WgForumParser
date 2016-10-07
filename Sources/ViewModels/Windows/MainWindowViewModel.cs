@@ -90,7 +90,7 @@ namespace ForumParser.ViewModels.Windows
         /// <summary>
         ///     Stores 'frm_session_id' cookie value.
         /// </summary>
-        public string SessionId { get; set; }
+        public string SessionId { get; set; } = "00000000004000013879006f00f4eb7a6ed7426e855be232d00af1";
 
         /// <summary>
         ///     True if .txt result format should be saved.

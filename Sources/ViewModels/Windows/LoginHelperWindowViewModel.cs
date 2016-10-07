@@ -126,15 +126,15 @@ namespace ForumParser.ViewModels.Windows
 
         private async void CefRequestHandler_BeforeBrowse( IBrowser browser, IFrame frame, IRequest request, bool isRedirect )
         {
-            if ( frame.IsMain )
-            {
-                var response = await frame.EvaluateScriptAsync( "(function(){var input=document.querySelector(\"[type='email']\"); return input ? input.value : null;})()" );
-
-                if ( response?.Result != null )
-                    _settingsManager.Settings.Email = response.Result?.ToString();
-
-                _settingsManager.Save();
-            }
+//            if ( frame.IsMain )
+//            {
+//                var response = await frame.EvaluateScriptAsync( "(function(){var input=document.querySelector(\"[type='email']\"); return input ? input.value : null;})()" );
+//
+//                if ( response?.Result != null )
+//                    _settingsManager.Settings.Email = response.Result?.ToString();
+//
+//                _settingsManager.Save();
+//            }
         }
 
         private void CefLoadHandler_MainFrameLoadStart( FrameLoadStartEventArgs args )
@@ -143,7 +143,7 @@ namespace ForumParser.ViewModels.Windows
 
         private async void CefLoadHandler_MainFrameLoadEnd( FrameLoadEndEventArgs args )
         {
-            var result = await args.Frame.EvaluateScriptAsync( "document.querySelector(\".js-submit-title\").innerText" );
+//            var result = await args.Frame.EvaluateScriptAsync( "document.querySelector(\".js-submit-title\").innerText" );
 
 ////            await args.Frame.EvaluateScriptAsync( $"document.querySelector(\"[type='email']\").value = \"{_settingsManager.Settings.Email ?? ""}\"" );
 

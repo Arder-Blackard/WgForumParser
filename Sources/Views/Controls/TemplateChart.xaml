@@ -7,10 +7,19 @@
              xmlns:converters="clr-namespace:ForumParser.Views.Converters"
              xmlns:controls1="clr-namespace:ForumParser.ViewModels.Controls"
              mc:Ignorable="d"
-             Width="{Binding Width}" Height="{Binding Height}"
              d:DesignHeight="300" d:DesignWidth="300"
              d:DataContext="{d:DesignInstance d:Type=controls1:TemplateViewModel, d:IsDesignTimeCreatable=True}">
 
+    <UserControl.Height>
+        <Binding Path="Height" />
+    </UserControl.Height>
+    <UserControl.Width>
+        <Binding Path="Width" />
+    </UserControl.Width>
+<!--    <UserControl.Height>480</UserControl.Height>-->
+<!--    <UserControl.Width>640</UserControl.Width>-->
+    
+    
     <UserControl.Resources>
         <ItemsPanelTemplate x:Key="ReversedEvenlyDistributedRowGrid">
             <controls:EvenlyDistributedRowGrid IsReverseOrder="True" />

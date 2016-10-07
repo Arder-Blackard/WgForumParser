@@ -19,7 +19,6 @@
 
     <Window.Resources>
         <converters:ConnectionBreakerLocationConverter x:Key="ConnectionTopConverter" />
-        <converters:ConnectionPointConverter x:Key="ConnectionPointConverter" />
         <system:Double x:Key="LeftOffset">2</system:Double>
         <system:Double x:Key="LeftOffset2">50</system:Double>
         <system:Double x:Key="RightOffset2">50</system:Double>
@@ -75,6 +74,7 @@
                     </ScrollViewer>
                 </Border>
             </GroupBox>
+            
             <ItemsControl Grid.Column="1" x:Name="ConnectionsBreakers"
                           ItemsSource="{Binding Connections, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=windows:TemplateEditor} }">
                 <ItemsControl.ItemsPanel>
@@ -117,45 +117,8 @@
                         <Path Stroke="#483D8A" StrokeThickness="2">
                             <Path.Data>
                                 <PathGeometry>
-                                    <PathFigure>
-                                        <PathFigure.StartPoint>
-                                            <MultiBinding Converter="{StaticResource ConnectionPointConverter}">
-                                                <Binding Source="{StaticResource LeftOffset}" />
-                                                <Binding Path="Left.HotspotLocation" />
-                                                <Binding Path="Left" />
-                                                <Binding ElementName="ConnectionsList" />
-                                                <Binding Path="VerticalOffset" ElementName="QuestionsScrollViewer" />
-                                            </MultiBinding>
-                                        </PathFigure.StartPoint>
-                                        <BezierSegment IsStroked="True">
-                                            <BezierSegment.Point1>
-                                                <MultiBinding Converter="{StaticResource ConnectionPointConverter}">
-                                                    <Binding Source="{StaticResource LeftOffset2}" />
-                                                    <Binding Path="Left.HotspotLocation" />
-                                                    <Binding Path="Left" />
-                                                    <Binding ElementName="ConnectionsList" />
-                                                    <Binding Path="VerticalOffset" ElementName="QuestionsScrollViewer" />
-                                                </MultiBinding>
-                                            </BezierSegment.Point1>
-                                            <BezierSegment.Point2>
-                                                <MultiBinding Converter="{StaticResource ConnectionPointConverter}">
-                                                    <Binding Source="{StaticResource RightOffset2}" />
-                                                    <Binding Path="Right.HotspotLocation" />
-                                                    <Binding Path="Right" />
-                                                    <Binding ElementName="ConnectionsList" />
-                                                    <Binding Path="VerticalOffset" ElementName="ChartsScrollViewer" />
-                                                </MultiBinding>
-                                            </BezierSegment.Point2>
-                                            <BezierSegment.Point3>
-                                                <MultiBinding Converter="{StaticResource ConnectionPointConverter}">
-                                                    <Binding Source="{StaticResource RightOffset}" />
-                                                    <Binding Path="Right.HotspotLocation" />
-                                                    <Binding Path="Right" />
-                                                    <Binding ElementName="ConnectionsList" />
-                                                    <Binding Path="VerticalOffset" ElementName="ChartsScrollViewer" />
-                                                </MultiBinding>
-                                            </BezierSegment.Point3>
-                                        </BezierSegment>
+                                    <PathFigure StartPoint="{Binding Path=Point0}">
+                                        <BezierSegment IsStroked="True" Point1="{Binding Path=Point1}" Point2="{Binding Path=Point2}" Point3="{Binding Path=Point3}" />
                                     </PathFigure>
                                 </PathGeometry>
                             </Path.Data>

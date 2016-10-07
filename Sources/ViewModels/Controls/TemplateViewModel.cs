@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using ForumParser.Models;
@@ -12,7 +13,7 @@ namespace ForumParser.ViewModels.Controls
     {
         #region Fields
 
-        public List<QuestionDataSeries> Series { get; } = new List<QuestionDataSeries>();
+        public ObservableCollection<QuestionDataSeries> Series { get; } = new ObservableCollection<QuestionDataSeries>();
         private int _answersCount;
         private ICollection<DataPointsGroup> _columnGroups;
         private double _maxValue;
@@ -100,7 +101,12 @@ namespace ForumParser.ViewModels.Controls
 
         public void RemoveQuestion( PollQuestion question )
         {
-            if ( Series.RemoveAll( series => series.Question == question ) > 0 )
+            var seriesIndex = Series.Select( ( series, index ) => new { Index = index, question = series.Question } ).FirstOrDefault( a => a.question == question )?.Index;
+
+            if ( seriesIndex != null )
+                Series.RemoveAt( (int) seriesIndex );
+
+            if (Series.Count > 0)
                 RebuildChart();
         }
 

@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace ForumParser.Views.Controls
@@ -36,6 +37,28 @@ namespace ForumParser.Views.Controls
 
         #region Events and invocation
 
+        //        protected override void OnRenderSizeChanged()
+        //        {
+        //            
+        //        }
+        /// <summary>
+        ///     Invoked when the parent of this element in the visual tree is changed. Overrides
+        ///     <see cref="M:System.Windows.UIElement.OnVisualParentChanged(System.Windows.DependencyObject)" />.
+        /// </summary>
+        /// <param name="oldParent">The old parent element. May be null to indicate that the element did not have a visual parent previously.</param>
+        protected override void OnVisualParentChanged( DependencyObject oldParent )
+        {
+            base.OnVisualParentChanged( oldParent );
+
+            var parent = oldParent as UIElement;
+            if ( parent != null )
+                parent.LayoutUpdated -= Parent_LayoutUpdated;
+
+            parent = VisualParent as UIElement;
+            if ( parent != null )
+                parent.LayoutUpdated += Parent_LayoutUpdated;
+        }
+
         /// <summary>
         ///     Raises the <see cref="E:System.Windows.FrameworkElement.SizeChanged" /> event, using the specified information as part of the eventual
         ///     event data.
@@ -47,30 +70,24 @@ namespace ForumParser.Views.Controls
             UpdateHotspot();
         }
 
-        /// <summary>
-        /// Supports incremental layout implementations in specialized subclasses of <see cref="T:System.Windows.FrameworkElement"/>. <see cref="M:System.Windows.FrameworkElement.ParentLayoutInvalidated(System.Windows.UIElement)"/>  is invoked when a child element has invalidated a property that is marked in metadata as affecting the parent's measure or arrange passes during layout. 
-        /// </summary>
-        /// <param name="child">The child element reporting the change.</param>
-        protected override void ParentLayoutInvalidated( UIElement child )
-        {
-            base.ParentLayoutInvalidated( child );
-            UpdateHotspot();
-        }
-
-        private void UpdateHotspot()
-        {
-           HotspotLocation = new Point(ActualWidth * Hotspot.X, ActualHeight * Hotspot.Y);
-        }
-
-        #endregion
-
-
-        #region Initialization
+        public event EventHandler ParentLayoutUpdated;
 
         #endregion
 
 
         #region Event handlers
+
+        private void Parent_LayoutUpdated( object sender /* always null */, EventArgs args ) => ParentLayoutUpdated?.Invoke( sender, args );
+
+        #endregion
+
+
+        #region Non-public methods
+
+        private void UpdateHotspot()
+        {
+            HotspotLocation = new Point( ActualWidth*Hotspot.X, ActualHeight*Hotspot.Y );
+        }
 
         #endregion
     }

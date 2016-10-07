@@ -12,6 +12,7 @@ using ForumParser.ViewModels.Controls;
 using ForumParser.ViewModels.Windows;
 using ForumParser.Views.Controls;
 using ForumParser.Views.Extensions;
+using WpfCommon.ViewModels.Base;
 using WpfCommon.Views.Base;
 
 namespace ForumParser.Views.Windows
@@ -23,7 +24,7 @@ namespace ForumParser.Views.Windows
     {
         #region Constants
 
-        private static readonly string PollQuestionFormat = typeof (PollQuestion).FullName;
+        private static readonly string PollQuestionFormat = typeof ( PollQuestion ).FullName;
 
         #endregion
 
@@ -72,10 +73,9 @@ namespace ForumParser.Views.Windows
             {
                 var newConnections =
                     from mapping in args.NewItems.OfType<QuestionChartMapping>()
-                    select new ConnectionCurve( ((UIElement) QuestionsList.ItemContainerGenerator.ContainerFromItem( mapping.Question ))
-                                                    .EnumerateChildren().OfType<HotspotContainer>().FirstOrDefault(),
-                                                ((UIElement) ChartsList.ItemContainerGenerator.ContainerFromItem( mapping.Template ))
-                                                    .EnumerateChildren().OfType<HotspotContainer>().FirstOrDefault() );
+                    select new ConnectionCurve( QuestionsList.FindItemContainer( mapping.Question ).FindChildOfType<HotspotContainer>(),
+                                                ChartsList.FindItemContainer( mapping.Template ).FindChildOfType<HotspotContainer>(),
+                                                ConnectionsList );
 
                 foreach ( var connection in newConnections )
                     Connections.Add( connection );
@@ -83,8 +83,7 @@ namespace ForumParser.Views.Windows
             else if ( args.Action == NotifyCollectionChangedAction.Remove )
             {
                 var oldQuestionViews = args.OldItems.OfType<QuestionChartMapping>()
-                                           .Select( mapping => ((UIElement) QuestionsList.ItemContainerGenerator.ContainerFromItem( mapping.Question ))
-                                                        .EnumerateChildren().OfType<HotspotContainer>().FirstOrDefault() )
+                                           .Select( mapping => QuestionsList.FindItemContainer( mapping.Question ).FindChildOfType<HotspotContainer>() )
                                            .ToHashSet();
 
                 var connections = Connections.Where( connection => oldQuestionViews.Contains( connection.Left ) ).ToList();
@@ -190,17 +189,42 @@ namespace ForumParser.Views.Windows
                 ViewModel?.RemoveQuestionFromTemplateCommand?.Execute( question );
         }
 
+        private void ChartsList_LayoutUpdated( object sender, EventArgs e )
+        {
+            ConnectionsList.UpdateLayout();
+        }
+
         #endregion
 
 
         #region Nested type: ConnectionCurve
 
-        public class ConnectionCurve
+        public class ConnectionCurve : SimpleViewModelBase
         {
+            #region Fields
+
+            private readonly UIElement _parent;
+
+            #endregion
+
+
             #region Auto-properties
 
             public HotspotContainer Left { get; }
             public HotspotContainer Right { get; }
+
+            #endregion
+
+
+            #region Properties
+
+            public Point Point0 => GetPoint( 2, Left );
+
+            public Point Point1 => GetPoint( 50, Left );
+
+            public Point Point2 => GetPoint( 50, Right );
+
+            public Point Point3 => GetPoint( 94, Right );
 
             #endregion
 
@@ -210,10 +234,41 @@ namespace ForumParser.Views.Windows
             /// <summary>
             ///     Initializes a new instance of the <see cref="T:System.Object" /> class.
             /// </summary>
-            public ConnectionCurve( HotspotContainer left, HotspotContainer right )
+            public ConnectionCurve( HotspotContainer left, HotspotContainer right, UIElement parent )
             {
+                _parent = parent;
                 Left = left;
+                Left.ParentLayoutUpdated += UpdateLeftPoints;
+
                 Right = right;
+                Right.ParentLayoutUpdated += UpdateRightPoints;
+            }
+
+            #endregion
+
+
+            #region Public methods
+
+            public Point GetPoint( int x, HotspotContainer target )
+            {
+                return new Point( x, target.TranslatePoint( target.HotspotLocation, _parent ).Y );
+            }
+
+            #endregion
+
+
+            #region Non-public methods
+
+            private void UpdateRightPoints( object sender, EventArgs e )
+            {
+                OnPropertyChanged( nameof( Point2 ) );
+                OnPropertyChanged( nameof( Point3 ) );
+            }
+
+            private void UpdateLeftPoints( object sender, EventArgs args )
+            {
+                OnPropertyChanged( nameof( Point0 ) );
+                OnPropertyChanged( nameof( Point1 ) );
             }
 
             #endregion
