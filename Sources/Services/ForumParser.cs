@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Dom;
+using AngleSharp.Html;
 using AngleSharp.Services.Default;
 using CommonLib.Extensions;
 using CommonLib.Logging;
@@ -176,6 +177,19 @@ namespace ForumParser.Services
                 _logger?.Info( "Загрузка голосования..." );
 
                 var document = await _browsingContext.OpenAsync( topicUrl );
+
+
+                try
+                {
+                    using (var stream = File.OpenWrite("r:\\p.txt"))
+                    using ( var writer = new StreamWriter( stream ) )
+                        document.ToHtml( writer, new PrettyMarkupFormatter() );
+                }
+                catch
+                {
+                }
+
+
                 forumTopic.Poll = ParsePoll(document);
                 if (forumTopic.Poll == null)
                 {
@@ -300,6 +314,17 @@ namespace ForumParser.Services
                     _logger?.Info( "Загрузка страницы " + Uri.UnescapeDataString( nextUrl ) );
 
                     var document = await _browsingContext.OpenAsync( nextUrl );
+
+                    try
+                    {
+                        using ( var stream = File.OpenWrite( "r:\\t" + nextUrl.Split( '\\', '/' ).Last() + ".txt" ) )
+                        using ( var writer = new StreamWriter( stream ) )
+                            document.ToHtml( writer, new PrettyMarkupFormatter() );
+                    }
+                    catch
+                    {
+                    }
+
                     pages.Add( document );
                     nextUrl = document.QuerySelector( "html>head>link[rel=next]" )?.Attributes["href"].Value;
                 } while ( !string.IsNullOrEmpty( nextUrl ) );

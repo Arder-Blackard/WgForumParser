@@ -32,10 +32,12 @@ namespace ForumParser.Views.Controls
 
         protected override Size MeasureOverride( Size availableSize )
         {
+            var cellSize = new Size( availableSize.Width/Children.Count, Math.Ceiling( availableSize.Height ) );
+
             var largestElementHeight = 0.0;
             foreach ( UIElement child in Children )
             {
-                child.Measure( availableSize );
+                child.Measure( cellSize );
                 if ( child.DesiredSize.Height > largestElementHeight )
                     largestElementHeight = child.DesiredSize.Height;
             }

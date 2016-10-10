@@ -139,6 +139,7 @@
     <Compile Include="Sources\ViewModels\Windows\StringInputDialogViewModel.cs" />
     <Compile Include="Sources\Views\Behaviors\AutoScroller.cs" />
     <Compile Include="Sources\Views\Controls\HotspotContainer.cs" />
+    <Compile Include="Sources\Views\Controls\RotatableLabel.cs" />
     <Compile Include="Sources\Views\Converters\ColumnColorConverter.cs" />
     <Compile Include="Sources\Exceptions\ForumParserException.cs" />
     <Compile Include="Sources\Models\AnonymousPollAnswer.cs" />

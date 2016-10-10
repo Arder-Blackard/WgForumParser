@@ -10,16 +10,16 @@
              d:DesignHeight="300" d:DesignWidth="300"
              d:DataContext="{d:DesignInstance d:Type=controls1:TemplateViewModel, d:IsDesignTimeCreatable=True}">
 
-    <UserControl.Height>
-        <Binding Path="Height" />
-    </UserControl.Height>
-    <UserControl.Width>
-        <Binding Path="Width" />
-    </UserControl.Width>
+        <UserControl.Height>
+            <Binding Path="Height" />
+        </UserControl.Height>
+        <UserControl.Width>
+            <Binding Path="Width" />
+        </UserControl.Width>
 <!--    <UserControl.Height>480</UserControl.Height>-->
 <!--    <UserControl.Width>640</UserControl.Width>-->
-    
-    
+
+
     <UserControl.Resources>
         <ItemsPanelTemplate x:Key="ReversedEvenlyDistributedRowGrid">
             <controls:EvenlyDistributedRowGrid IsReverseOrder="True" />
@@ -32,42 +32,68 @@
     </UserControl.Resources>
     <Grid Background="White">
         <DockPanel>
-            <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding Series}" HorizontalContentAlignment="Stretch">
+            <!--  Legend  -->
+            <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding Series}" HorizontalContentAlignment="Stretch"
+                          Margin="24,8" AlternationCount="1000000">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding Text}" HorizontalAlignment="Center" />
+                        <Grid Margin="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Width="32" Height="18" BorderThickness="1" BorderBrush="Gray"
+                                    Background="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=(ItemsControl.AlternationIndex), Converter={StaticResource ColumnColorConverter}}" />
+                            <TextBlock Grid.Column="1" Text="{Binding Text}" HorizontalAlignment="Stretch"
+                                       Padding="4, 0" />
+                        </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+            <!--  Chart  -->
             <Border>
                 <DockPanel>
                     <!-- Numbers -->
-                    <ItemsControl DockPanel.Dock="Left" ItemsSource="{Binding GridLines}" Margin="0,8,0,24" ItemsPanel="{StaticResource ReversedEvenlyDistributedRowGrid}">
+                    <ItemsControl DockPanel.Dock="Left" ItemsSource="{Binding GridLines}" Margin="0,8,0,24"
+                                  ItemsPanel="{StaticResource ReversedEvenlyDistributedRowGrid}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                     <TextBlock Text="{Binding}" Margin="2,0" />
-                                    <Border HorizontalAlignment="Stretch" VerticalAlignment="Top" BorderBrush="Gray" Opacity="0.25" Margin="0,8,0,0" BorderThickness="0,1,0,0" Height="1" Width="4" />
+                                    <Border HorizontalAlignment="Stretch" VerticalAlignment="Top" BorderBrush="Gray"
+                                            Opacity="0.25" Margin="0,8,0,0" BorderThickness="0,1,0,0" Height="1"
+                                            Width="4" />
                                 </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                     <!-- Grid -->
                     <Grid Margin="0,16,16,16">
-                        <Border BorderThickness="1" BorderBrush="Gray" Opacity="0.25" />
-                        <ItemsControl ItemsSource="{Binding GridLines}" ItemsPanel="{StaticResource ReversedEvenlyDistributedRowGrid}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition Height="Auto"></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" BorderThickness="1" BorderBrush="Gray" Opacity="0.25" />
+                        <!--  Grid Lines  -->
+                        <ItemsControl Grid.Row="0" ItemsSource="{Binding GridLines}"
+                                      ItemsPanel="{StaticResource ReversedEvenlyDistributedRowGrid}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border HorizontalAlignment="Stretch" VerticalAlignment="Top" BorderBrush="Gray" Opacity="0.25" BorderThickness="0,1,0,0" />
+                                    <Border HorizontalAlignment="Stretch" VerticalAlignment="Top" BorderBrush="Gray"
+                                            Opacity="0.25" BorderThickness="0,1,0,0" />
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                         <!-- Columns -->
-                        <ItemsControl ItemsSource="{Binding ColumnGroups}" ItemsPanel="{StaticResource EvenlyDistributedColumnGrid}" HorizontalAlignment="Stretch" Margin="1">
+                        <ItemsControl Grid.Row="0" ItemsSource="{Binding ColumnGroups}"
+                                      ItemsPanel="{StaticResource EvenlyDistributedColumnGrid}"
+                                      HorizontalAlignment="Stretch" Margin="1">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <!-- Single columns group -->
-                                    <ItemsControl Name="DataPointsGroup" Margin="30,0" ItemsPanel="{StaticResource EvenlyDistributedColumnGrid}" ItemsSource="{Binding DataPoints}"
+                                    <ItemsControl Name="DataPointsGroup" Margin="30,0"
+                                                  ItemsPanel="{StaticResource EvenlyDistributedColumnGrid}"
+                                                  ItemsSource="{Binding DataPoints}"
                                                   HorizontalAlignment="Stretch" AlternationCount="1000000">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
@@ -79,7 +105,8 @@
                                                         MaxWidth="40">
                                                     <Border.Height>
                                                         <MultiBinding Converter="{StaticResource RatioConverter}">
-                                                            <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                                            <Binding Path="ActualHeight"
+                                                                     RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
                                                             <Binding Path="Value" />
                                                             <Binding Path="MaxValue" />
                                                         </MultiBinding>
@@ -91,18 +118,33 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <!-- Column Labels -->
+                        <ItemsControl  Grid.Row="1" ItemsSource="{Binding ColumnGroups}"
+                                      ItemsPanel="{StaticResource EvenlyDistributedColumnGrid}"
+                                      HorizontalAlignment="Stretch" Margin="1">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <!-- Single columns group -->
+                                    <controls:RotatableLabel>
+                                        <TextBlock Text="{Binding Text, Mode=OneWay}" HorizontalAlignment="Stretch" TextAlignment="Center" TextWrapping="NoWrap"/>
+                                    </controls:RotatableLabel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
                     </Grid>
                 </DockPanel>
             </Border>
         </DockPanel>
-        <Border x:Name="SizeGrip" Background="White" Width="15" Height="15" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+        <Border x:Name="SizeGrip" Background="White" Width="15" Height="15" HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
                 MouseDown="Grip_MouseDown"
                 MouseUp="Grip_MouseUp"
                 MouseMove="Grip_MouseMove"
                 Cursor="{x:Static Cursors.SizeNWSE}">
             <Path Width="12" Height="12" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                Stroke="Black" StrokeThickness="1" Opacity="0.5"
-                Data="M1,11L11,1M5,11L11,5M9,11L11,9" />
+                  Stroke="Black" StrokeThickness="1" Opacity="0.5"
+                  Data="M1,11L11,1M5,11L11,5M9,11L11,9" />
         </Border>
     </Grid>
 </UserControl>

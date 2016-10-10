@@ -5,62 +5,83 @@ using System.Globalization;
 using System.Linq;
 using ForumParser.Models;
 using WpfCommon.ViewModels.Base;
-using Enumerable = System.Linq.Enumerable;
 
 namespace ForumParser.ViewModels.Controls
 {
+    /// <summary>
+    ///     Describes groupped charts template.
+    /// </summary>
     public class TemplateViewModel : SimpleViewModelBase
     {
         #region Fields
 
-        public ObservableCollection<QuestionDataSeries> Series { get; } = new ObservableCollection<QuestionDataSeries>();
         private int _answersCount;
         private ICollection<DataPointsGroup> _columnGroups;
-        private double _maxValue;
         private ICollection<string> _gridLines;
-        private double _width = 480;
         private double _height = 360;
+        private double _maxValue;
+        private double _width = 480;
 
         #endregion
 
 
         #region Auto-properties
 
+        public ObservableCollection<QuestionDataSeries> Series { get; } = new ObservableCollection<QuestionDataSeries>();
+
         #endregion
 
 
         #region Properties
 
+        /// <summary>
+        ///     Chart width.
+        /// </summary>
         public double Width
         {
             get { return _width; }
             set { SetValue( ref _width, value ); }
         }
 
+        /// <summary>
+        ///     Chart height.
+        /// </summary>
         public double Height
         {
             get { return _height; }
             set { SetValue( ref _height, value ); }
         }
 
+        /// <summary>
+        ///     Chart grid lines labels.
+        /// </summary>
         public ICollection<string> GridLines
         {
             get { return _gridLines; }
             set { SetValue( ref _gridLines, value ); }
         }
 
+        /// <summary>
+        ///     Each columns group are the columns for a single answer.
+        /// </summary>
         public ICollection<DataPointsGroup> ColumnGroups
         {
             get { return _columnGroups; }
             private set { SetValue( ref _columnGroups, value ); }
         }
 
+        /// <summary>
+        ///     Number of answers in each question of the group.
+        /// </summary>
         public int AnswersCount
         {
             get { return _answersCount; }
             set { SetValue( ref _answersCount, value ); }
         }
 
+        /// <summary>
+        ///     Chart maximal value.
+        /// </summary>
         public double MaxValue
         {
             get { return _maxValue; }
@@ -82,6 +103,11 @@ namespace ForumParser.ViewModels.Controls
 
         #region Public methods
 
+        /// <summary>
+        ///     Adds a question to the template.
+        /// </summary>
+        /// <param name="question">THe question to add.</param>
+        /// <exception cref="ArgumentException">The question answers count doen't match that of the group.</exception>
         public void AddQuestion( PollQuestion question )
         {
             if ( question.Answers.Count != AnswersCount )
@@ -94,19 +120,29 @@ namespace ForumParser.ViewModels.Controls
             RebuildChart();
         }
 
+        /// <summary>
+        ///     Checks whether the template accepts the proposed question.
+        /// </summary>
+        /// <param name="question">The question to check.</param>
+        /// <returns>True if the question can be added to the group.</returns>
         public bool AcceptsQuestion( PollQuestion question )
         {
             return question.Answers.Count == AnswersCount && Series.All( s => s.Question != question );
         }
 
+        /// <summary>
+        ///     Removes the <paramref name="question" /> from the template.
+        /// </summary>
+        /// <param name="question">The question to be removed.</param>
         public void RemoveQuestion( PollQuestion question )
         {
-            var seriesIndex = Series.Select( ( series, index ) => new { Index = index, question = series.Question } ).FirstOrDefault( a => a.question == question )?.Index;
+            var seriesIndex =
+                Series.Select( ( series, index ) => new { Index = index, question = series.Question } ).FirstOrDefault( a => a.question == question )?.Index;
 
             if ( seriesIndex != null )
                 Series.RemoveAt( (int) seriesIndex );
 
-            if (Series.Count > 0)
+            if ( Series.Count > 0 )
                 RebuildChart();
         }
 
@@ -115,6 +151,9 @@ namespace ForumParser.ViewModels.Controls
 
         #region Non-public methods
 
+        /// <summary>
+        ///     Recalculates the values required to display the chart.
+        /// </summary>
         private void RebuildChart()
         {
             if ( Series.Count == 0 )
@@ -128,9 +167,12 @@ namespace ForumParser.ViewModels.Controls
                                   let answer = s.Question.Answers[answerIndex]
                                   select new DataPoint( answer.Text, answer.Count, MaxValue )
                  select new DataPointsGroup( dataPoints )
-                ).ToList();
+                    ).ToList();
         }
 
+        /// <summary>
+        ///     Recalculates the grid values.
+        /// </summary>
         private void RebuildGrid()
         {
             double maxValue = Series.SelectMany( s => s.Question.Answers ).Max( a => a.Count );
@@ -144,6 +186,11 @@ namespace ForumParser.ViewModels.Controls
                                   .ToArray();
         }
 
+        /// <summary>
+        ///     Calculates and returns the grid parameters.
+        /// </summary>
+        /// <param name="maxValue"></param>
+        /// <param name="gridStep"></param>
         private static void CalculateGridParameters( ref double maxValue, out double gridStep )
         {
             var exp = Math.Floor( Math.Log10( maxValue ) );
@@ -154,11 +201,21 @@ namespace ForumParser.ViewModels.Controls
         #endregion
     }
 
+    /// <summary>
+    ///     Represents data series generated from a question answers.
+    /// </summary>
     public class QuestionDataSeries : SimpleViewModelBase
     {
         #region Auto-properties
 
+        /// <summary>
+        ///     Question display text.
+        /// </summary>
         public string Text { get; set; }
+
+        /// <summary>
+        ///     Reference to the poll question.
+        /// </summary>
         public PollQuestion Question { get; }
 
         #endregion
@@ -175,32 +232,62 @@ namespace ForumParser.ViewModels.Controls
         #endregion
     }
 
+    /// <summary>
+    ///     Represents a single answer columns group.
+    /// </summary>
     public class DataPointsGroup : SimpleViewModelBase
     {
         #region Auto-properties
 
+        /// <summary>
+        ///     Columns group columns.
+        /// </summary>
         public ICollection<DataPoint> DataPoints { get; }
+
+        public string Text { get; set; }
+
+        public string TextOverride { get; set; }
+
+        public bool IsTextConflicted { get; set; }
 
         #endregion
 
-
+        
         #region Initialization
 
         public DataPointsGroup( IEnumerable<DataPoint> dataPoints )
         {
             DataPoints = dataPoints.ToArray();
+
+            var firstDataPointText = DataPoints.First().Text;
+
+            IsTextConflicted = DataPoints.Skip( 1 ).Any( dataPoint => dataPoint.Text != firstDataPointText );
+            Text = IsTextConflicted ? "???" : firstDataPointText;
         }
 
         #endregion
     }
 
+    /// <summary>
+    ///     A single chart column.
+    /// </summary>
     public class DataPoint
     {
         #region Auto-properties
 
+        /// <summary>
+        ///     The chart max value.
+        /// </summary>
         public double MaxValue { get; }
+
+        /// <summary>
+        ///     Data point value.
+        /// </summary>
         public double Value { get; }
 
+        /// <summary>
+        ///     Data point text.
+        /// </summary>
         public string Text { get; }
 
         #endregion
