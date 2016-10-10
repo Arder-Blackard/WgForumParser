@@ -275,5 +275,16 @@ namespace ForumParser.Views.Windows
         }
 
         #endregion
+
+
+        private void MergedChart_DoubleClick( object sender, MouseButtonEventArgs e )
+        {
+            var templateViewModel = (sender as TemplateChart)?.DataContext as TemplateViewModel;
+
+            if ( templateViewModel != null )
+            {
+                ViewModel?.EditChartTemplate( templateViewModel );
+            }
+        }
     }
 }

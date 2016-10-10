@@ -6,6 +6,7 @@ using System.Windows.Input;
 using ForumParser.Models;
 using ForumParser.ViewModels.Controls;
 using WpfCommon.Commands;
+using WpfCommon.Services;
 using WpfCommon.ViewModels.Base;
 
 namespace ForumParser.ViewModels.Windows
@@ -16,6 +17,7 @@ namespace ForumParser.ViewModels.Windows
 
         private ForumTopic _forumTopic;
         private ICollection<PollQuestionChartViewModel> _questions;
+        private IViewProvider _viewProvider;
 
         #endregion
 
@@ -55,8 +57,9 @@ namespace ForumParser.ViewModels.Windows
 
         #region Initialization
 
-        public TemplateEditorViewModel()
+        public TemplateEditorViewModel( IViewProvider viewProvider )
         {
+            _viewProvider = viewProvider;
             CreateNewChartCommand = new DelegateCommand<PollQuestion>( CreateNewChartCommandHandler );
             AddQuestionToTemplateCommand = new DelegateCommand<Tuple<TemplateViewModel, PollQuestion>>( AddQuestionToTemplateCommandHandler );
             RemoveQuestionFromTemplateCommand = new DelegateCommand<PollQuestion>( RemoveQuestionFromTemplateCommandHandler );
@@ -168,6 +171,12 @@ namespace ForumParser.ViewModels.Windows
         }
 
         #endregion
+
+
+        public void EditChartTemplate( TemplateViewModel templateViewModel )
+        {
+            var result = _viewProvider.Show<TemplatePropertiesEditorViewModel>( this, propertiesViewModel => propertiesViewModel.Template = templateViewModel );
+        }
     }
 
     public class QuestionChartMapping

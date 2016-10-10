@@ -119,14 +119,16 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                         <!-- Column Labels -->
-                        <ItemsControl  Grid.Row="1" ItemsSource="{Binding ColumnGroups}"
+                        <ItemsControl Grid.Row="1" ItemsSource="{Binding ColumnGroups}"
                                       ItemsPanel="{StaticResource EvenlyDistributedColumnGrid}"
                                       HorizontalAlignment="Stretch" Margin="1">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <!-- Single columns group -->
-                                    <controls:RotatableLabel>
-                                        <TextBlock Text="{Binding Text, Mode=OneWay}" HorizontalAlignment="Stretch" TextAlignment="Center" TextWrapping="NoWrap"/>
+                                    <controls:RotatableLabel RotationAllowed="False">
+                                        <controls:RotatableLabel.Content>
+                                            <TextBlock Text="{Binding Text, Mode=OneWay}" HorizontalAlignment="Stretch" TextAlignment="Center" TextWrapping="Wrap"/>
+                                        </controls:RotatableLabel.Content>
                                     </controls:RotatableLabel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>

@@ -137,6 +137,7 @@
     <Compile Include="Sources\Services\CefHandlers\CefLoadHandler.cs" />
     <Compile Include="Sources\Services\CefHandlers\CefRequestHandler.cs" />
     <Compile Include="Sources\ViewModels\Windows\StringInputDialogViewModel.cs" />
+    <Compile Include="Sources\ViewModels\Windows\TemplatePropertiesEditorViewModel.cs" />
     <Compile Include="Sources\Views\Behaviors\AutoScroller.cs" />
     <Compile Include="Sources\Views\Controls\HotspotContainer.cs" />
     <Compile Include="Sources\Views\Controls\RotatableLabel.cs" />
@@ -176,6 +177,9 @@
     <Compile Include="Sources\Views\Converters\RatioConverter.cs" />
     <Compile Include="Sources\Views\Converters\WidthConverter.cs" />
     <Compile Include="Sources\Views\Extensions\VisualExtensions.cs" />
+    <Compile Include="Sources\Views\Windows\TemplatePropertiesEditor.xaml.cs">
+      <DependentUpon>TemplatePropertiesEditor.xaml</DependentUpon>
+    </Compile>
     <Page Include="Sources\Views\Controls\TemplateChart.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -217,6 +221,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Sources\Views\Windows\TemplatePropertiesEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">

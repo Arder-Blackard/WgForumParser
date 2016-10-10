@@ -218,6 +218,8 @@ namespace ForumParser.ViewModels.Controls
         /// </summary>
         public PollQuestion Question { get; }
 
+        public string TextOverride { get; set; }
+
         #endregion
 
 
