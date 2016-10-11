@@ -1,7 +1,7 @@
 ﻿using ForumParser.ViewModels.Windows;
 using WpfCommon.Views.Base;
 
-namespace ForumParser.Sources.Views.Windows
+namespace ForumParser.Views.Windows
 {
     /// <summary>
     ///     Interaction logic for TemplatePropertiesEditor.xaml

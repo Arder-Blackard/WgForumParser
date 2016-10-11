@@ -306,7 +306,7 @@ namespace ForumParser.ViewModels.Windows
         /// <param name="users">Users enumeration.</param>
         private void CopyUsersWithMarksCommandHandler( IEnumerable users )
         {
-            Execute( () =>
+            ExecuteAndCatchExceptions( () =>
             {
                 var content = users.OfType<UserViewModel>().Select( user => $"{user.Name}\t{user.Mark}" ).JoinToString( "\r\n" );
                 Clipboard.SetText( content );
@@ -319,7 +319,7 @@ namespace ForumParser.ViewModels.Windows
         /// <param name="users">Users enumeration.</param>
         private void CopyUsersWithoutMarksCommandHandler( IEnumerable users )
         {
-            Execute( () =>
+            ExecuteAndCatchExceptions( () =>
             {
                 var content = users.OfType<UserViewModel>().Select( user => user.Name ).JoinToString( "\r\n" );
                 Clipboard.SetText( content );
@@ -353,7 +353,11 @@ namespace ForumParser.ViewModels.Windows
         /// </summary>
         private void EditTemplateCommandHandler()
         {
-            Execute( () => _viewProvider.Show<TemplateEditorViewModel>( this, viewModel => viewModel.ForumTopic = ForumTopic ) );
+            ExecuteAndCatchExceptions( () =>
+            {
+                var dialogResult = _viewProvider.Show<TemplateEditorViewModel>( this, viewModel => viewModel.ForumTopic = ForumTopic );
+
+            } );
         }
 
         /// <summary>
@@ -423,7 +427,7 @@ namespace ForumParser.ViewModels.Windows
         /// <returns></returns>
         private void LoadIntermediateResultCommandHandler()
         {
-            Execute( () =>
+            ExecuteAndCatchExceptions( () =>
             {
                 var saveFile = _viewProvider.ShowDialog<OpenFileViewModel>( this, viewModel =>
                 {
@@ -455,7 +459,7 @@ namespace ForumParser.ViewModels.Windows
         /// </summary>
         private void SaveFinalResultCommandHandler()
         {
-            Execute( () =>
+            ExecuteAndCatchExceptions( () =>
             {
                 if ( !SaveTxt && !SaveCsv )
                 {
@@ -493,7 +497,7 @@ namespace ForumParser.ViewModels.Windows
 
         private void SaveIntermediateResultCommandHandler()
         {
-            Execute( () =>
+            ExecuteAndCatchExceptions( () =>
             {
                 var saveFile = _viewProvider.ShowDialog<SaveFileViewModel>( this, viewModel =>
                 {
@@ -670,7 +674,7 @@ namespace ForumParser.ViewModels.Windows
             UsersWithFeedbackOnlyCount = _users.Where( UsersWithFeedbackOnlyFilter ).Count();
         }
 
-        private void Execute( Action action )
+        private void ExecuteAndCatchExceptions( Action action )
         {
             try
             {

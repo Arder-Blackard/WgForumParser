@@ -139,6 +139,9 @@
     <Compile Include="Sources\ViewModels\Windows\StringInputDialogViewModel.cs" />
     <Compile Include="Sources\ViewModels\Windows\TemplatePropertiesEditorViewModel.cs" />
     <Compile Include="Sources\Views\Behaviors\AutoScroller.cs" />
+    <Compile Include="Sources\Views\Controls\DataPointsGroupView.xaml.cs">
+      <DependentUpon>DataPointsGroupView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Sources\Views\Controls\HotspotContainer.cs" />
     <Compile Include="Sources\Views\Controls\RotatableLabel.cs" />
     <Compile Include="Sources\Views\Converters\ColumnColorConverter.cs" />
@@ -180,6 +183,10 @@
     <Compile Include="Sources\Views\Windows\TemplatePropertiesEditor.xaml.cs">
       <DependentUpon>TemplatePropertiesEditor.xaml</DependentUpon>
     </Compile>
+    <Page Include="Sources\Views\Controls\DataPointsGroupView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Sources\Views\Controls\TemplateChart.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

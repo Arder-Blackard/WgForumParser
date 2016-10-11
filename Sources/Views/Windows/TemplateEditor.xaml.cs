@@ -24,7 +24,7 @@ namespace ForumParser.Views.Windows
     {
         #region Constants
 
-        private static readonly string PollQuestionFormat = typeof ( PollQuestion ).FullName;
+        private static readonly string DragAndDropPollQuestionFormat = typeof ( PollQuestion ).FullName;
 
         #endregion
 
@@ -110,7 +110,7 @@ namespace ForumParser.Views.Windows
 
         private void ChartsPanel_DragOver( object sender, DragEventArgs e )
         {
-            if ( !e.Data.GetDataPresent( PollQuestionFormat ) )
+            if ( !e.Data.GetDataPresent( DragAndDropPollQuestionFormat ) )
                 e.Effects = DragDropEffects.None;
             else
                 e.Effects = DragDropEffects.Copy;
@@ -121,10 +121,10 @@ namespace ForumParser.Views.Windows
         /// </summary>
         private void ChartsPanel_Drop( object sender, DragEventArgs e )
         {
-            if ( !e.Data.GetDataPresent( PollQuestionFormat ) )
+            if ( !e.Data.GetDataPresent( DragAndDropPollQuestionFormat ) )
                 return;
 
-            var pollQuestion = (PollQuestion) e.Data.GetData( PollQuestionFormat );
+            var pollQuestion = (PollQuestion) e.Data.GetData( DragAndDropPollQuestionFormat );
             ViewModel?.CreateNewChartCommand?.Execute( pollQuestion );
         }
 
@@ -132,7 +132,7 @@ namespace ForumParser.Views.Windows
         {
             e.Handled = true;
 
-            if ( !e.Data.GetDataPresent( PollQuestionFormat ) )
+            if ( !e.Data.GetDataPresent( DragAndDropPollQuestionFormat ) )
                 return;
 
             var chart = e.Source as TemplateChart;
@@ -153,10 +153,10 @@ namespace ForumParser.Views.Windows
         {
             e.Handled = true;
 
-            if ( !e.Data.GetDataPresent( PollQuestionFormat ) )
+            if ( !e.Data.GetDataPresent( DragAndDropPollQuestionFormat ) )
                 return;
 
-            var pollQuestion = (PollQuestion) e.Data.GetData( PollQuestionFormat );
+            var pollQuestion = (PollQuestion) e.Data.GetData( DragAndDropPollQuestionFormat );
             if ( ((e.Source as TemplateChart)?.DataContext as TemplateViewModel)?.AcceptsQuestion( pollQuestion ) == true )
                 e.Effects = DragDropEffects.Copy;
             else
@@ -170,10 +170,10 @@ namespace ForumParser.Views.Windows
         {
             e.Handled = true;
 
-            if ( !e.Data.GetDataPresent( PollQuestionFormat ) )
+            if ( !e.Data.GetDataPresent( DragAndDropPollQuestionFormat ) )
                 return;
 
-            var pollQuestion = (PollQuestion) e.Data.GetData( PollQuestionFormat );
+            var pollQuestion = (PollQuestion) e.Data.GetData( DragAndDropPollQuestionFormat );
 
             var mergedChartViewModel = (e.Source as TemplateChart)?.DataContext as TemplateViewModel;
             if ( mergedChartViewModel?.AcceptsQuestion( pollQuestion ) != true )
@@ -199,6 +199,9 @@ namespace ForumParser.Views.Windows
 
         #region Nested type: ConnectionCurve
 
+        /// <summary>
+        ///     Represents a connection curve between two blocks.
+        /// </summary>
         public class ConnectionCurve : SimpleViewModelBase
         {
             #region Fields

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
+using System.Windows.Input;
 using ForumParser.Models;
+using WpfCommon.Commands;
 using WpfCommon.ViewModels.Base;
 
 namespace ForumParser.ViewModels.Controls
@@ -161,13 +163,11 @@ namespace ForumParser.ViewModels.Controls
 
             RebuildGrid();
 
-            ColumnGroups =
-                (from answerIndex in Enumerable.Range( 0, AnswersCount )
-                 let dataPoints = from s in Series
-                                  let answer = s.Question.Answers[answerIndex]
-                                  select new DataPoint( answer.Text, answer.Count, MaxValue )
-                 select new DataPointsGroup( dataPoints )
-                    ).ToList();
+            ColumnGroups = (from answerIndex in Enumerable.Range( 0, AnswersCount )
+                            select new DataPointsGroup( from s in Series
+                                                        let answer = s.Question.Answers[answerIndex]
+                                                        select new DataPoint( answer.Text, answer.Count, MaxValue ) )
+                           ).ToList();
         }
 
         /// <summary>
@@ -206,19 +206,33 @@ namespace ForumParser.ViewModels.Controls
     /// </summary>
     public class QuestionDataSeries : SimpleViewModelBase
     {
-        #region Auto-properties
+        #region Fields
 
-        /// <summary>
-        ///     Question display text.
-        /// </summary>
-        public string Text { get; set; }
+        private string _text;
+
+        #endregion
+
+
+        #region Auto-properties
 
         /// <summary>
         ///     Reference to the poll question.
         /// </summary>
         public PollQuestion Question { get; }
 
-        public string TextOverride { get; set; }
+        #endregion
+
+
+        #region Properties
+
+        /// <summary>
+        ///     Question display text.
+        /// </summary>
+        public string Text
+        {
+            get { return _text; }
+            set { SetValue( ref _text, value ); }
+        }
 
         #endregion
 
@@ -239,6 +253,9 @@ namespace ForumParser.ViewModels.Controls
     /// </summary>
     public class DataPointsGroup : SimpleViewModelBase
     {
+        private string _text;
+
+
         #region Auto-properties
 
         /// <summary>
@@ -246,15 +263,24 @@ namespace ForumParser.ViewModels.Controls
         /// </summary>
         public ICollection<DataPoint> DataPoints { get; }
 
-        public string Text { get; set; }
-
-        public string TextOverride { get; set; }
+        public string Text
+        {
+            get { return _text; }
+            set { SetValue( ref _text, value ); }
+        }
 
         public bool IsTextConflicted { get; set; }
 
         #endregion
 
-        
+
+        #region Commands
+
+        public ICommand SetTextOverrideCommand { get; }
+
+        #endregion
+
+
         #region Initialization
 
         public DataPointsGroup( IEnumerable<DataPoint> dataPoints )
@@ -265,6 +291,19 @@ namespace ForumParser.ViewModels.Controls
 
             IsTextConflicted = DataPoints.Skip( 1 ).Any( dataPoint => dataPoint.Text != firstDataPointText );
             Text = IsTextConflicted ? "???" : firstDataPointText;
+
+            SetTextOverrideCommand = new DelegateCommand<string>( SetTextOverride );
+        }
+
+        #endregion
+
+
+        #region Non-public methods
+
+        private void SetTextOverride( string text )
+        {
+            Text = text;
+            IsTextConflicted = false;
         }
 
         #endregion

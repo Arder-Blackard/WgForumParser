@@ -17,7 +17,7 @@ namespace ForumParser.ViewModels.Windows
 
         private ForumTopic _forumTopic;
         private ICollection<PollQuestionChartViewModel> _questions;
-        private IViewProvider _viewProvider;
+        private readonly IViewProvider _viewProvider;
 
         #endregion
 

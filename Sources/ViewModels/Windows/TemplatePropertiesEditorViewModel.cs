@@ -5,6 +5,21 @@ namespace ForumParser.ViewModels.Windows
 {
     public class TemplatePropertiesEditorViewModel : SimpleWindowViewModelBase
     {
-        public TemplateViewModel Template { get; set; }
+        #region Fields
+
+        private TemplateViewModel _template;
+
+        #endregion
+
+
+        #region Properties
+
+        public TemplateViewModel Template
+        {
+            get { return _template; }
+            set { SetValue( ref _template, value ); }
+        }
+
+        #endregion
     }
 }

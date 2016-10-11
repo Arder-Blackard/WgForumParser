@@ -1,0 +1,28 @@
+﻿<UserControl x:Class="ForumParser.Views.Controls.DataPointsGroupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:controls="clr-namespace:ForumParser.ViewModels.Controls"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300"
+             d:DataContext="{d:DesignInstance d:Type=controls:DataPointsGroup, IsDesignTimeCreatable=True}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition Width="24" />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <ListBox x:Name="ListBox" Grid.Column="0" ItemsSource="{Binding DataPoints}" Margin="4" SelectedIndex="0" HorizontalContentAlignment="Stretch">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <ContentControl PreviewMouseDoubleClick="DataPointText_MouseDoubleClick" Content="{Binding Text}" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ListBox>
+        <Button Grid.Column="1" Content=">" Margin="4" Command="{Binding SetTextOverrideCommand}" CommandParameter="{Binding ElementName=ListBox, Path=SelectedValue.Text}" />
+        <TextBox Grid.Column="2" TextWrapping="Wrap" AcceptsReturn="True" Margin="4" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" />
+    </Grid>
+
+</UserControl>
+
