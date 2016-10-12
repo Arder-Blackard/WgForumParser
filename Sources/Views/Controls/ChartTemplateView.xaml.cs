@@ -9,7 +9,7 @@ namespace ForumParser.Views.Controls
     /// <summary>
     ///     Interaction logic for MergedChart.xaml
     /// </summary>
-    public partial class TemplateChart : UserControl
+    public partial class ChartTemplateView : UserControl
     {
         #region Fields
 
@@ -23,7 +23,7 @@ namespace ForumParser.Views.Controls
 
         #region Initialization
 
-        public TemplateChart()
+        public ChartTemplateView()
         {
             InitializeComponent();
         }
@@ -38,7 +38,7 @@ namespace ForumParser.Views.Controls
             if ( _resizing )
             {
                 var desiredSize = _initialDelta + Mouse.GetPosition( this );
-                var templateViewModel = DataContext as TemplateViewModel;
+                var templateViewModel = DataContext as ChartTemplateViewModel;
                 if ( templateViewModel != null )
                 {
                     templateViewModel.Width = Math.Max( desiredSize.X, 200 );

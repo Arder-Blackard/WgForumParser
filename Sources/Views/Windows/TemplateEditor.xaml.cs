@@ -135,7 +135,7 @@ namespace ForumParser.Views.Windows
             if ( !e.Data.GetDataPresent( DragAndDropPollQuestionFormat ) )
                 return;
 
-            var chart = e.Source as TemplateChart;
+            var chart = e.Source as ChartTemplateView;
             if ( chart != null )
                 chart.BorderBrush = Brushes.Black;
         }
@@ -144,7 +144,7 @@ namespace ForumParser.Views.Windows
         {
             e.Handled = true;
 
-            var chart = e.Source as TemplateChart;
+            var chart = e.Source as ChartTemplateView;
             if ( chart != null )
                 chart.BorderBrush = Brushes.Transparent;
         }
@@ -157,7 +157,7 @@ namespace ForumParser.Views.Windows
                 return;
 
             var pollQuestion = (PollQuestion) e.Data.GetData( DragAndDropPollQuestionFormat );
-            if ( ((e.Source as TemplateChart)?.DataContext as TemplateViewModel)?.AcceptsQuestion( pollQuestion ) == true )
+            if ( ((e.Source as ChartTemplateView)?.DataContext as ChartTemplateViewModel)?.AcceptsQuestion( pollQuestion ) == true )
                 e.Effects = DragDropEffects.Copy;
             else
                 e.Effects = DragDropEffects.None;
@@ -175,7 +175,7 @@ namespace ForumParser.Views.Windows
 
             var pollQuestion = (PollQuestion) e.Data.GetData( DragAndDropPollQuestionFormat );
 
-            var mergedChartViewModel = (e.Source as TemplateChart)?.DataContext as TemplateViewModel;
+            var mergedChartViewModel = (e.Source as ChartTemplateView)?.DataContext as ChartTemplateViewModel;
             if ( mergedChartViewModel?.AcceptsQuestion( pollQuestion ) != true )
                 return;
 
@@ -282,7 +282,7 @@ namespace ForumParser.Views.Windows
 
         private void MergedChart_DoubleClick( object sender, MouseButtonEventArgs e )
         {
-            var templateViewModel = (sender as TemplateChart)?.DataContext as TemplateViewModel;
+            var templateViewModel = (sender as ChartTemplateView)?.DataContext as ChartTemplateViewModel;
 
             if ( templateViewModel != null )
             {

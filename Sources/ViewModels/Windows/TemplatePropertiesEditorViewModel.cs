@@ -7,14 +7,14 @@ namespace ForumParser.ViewModels.Windows
     {
         #region Fields
 
-        private TemplateViewModel _template;
+        private ChartTemplateViewModel _template;
 
         #endregion
 
 
         #region Properties
 
-        public TemplateViewModel Template
+        public ChartTemplateViewModel Template
         {
             get { return _template; }
             set { SetValue( ref _template, value ); }

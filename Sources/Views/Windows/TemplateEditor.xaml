@@ -160,7 +160,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <controls:HotspotContainer Hotspot="0,0.5" HorizontalContentAlignment="Left">
-                                            <controls:TemplateChart
+                                            <controls:ChartTemplateView
                                                 HorizontalAlignment="Left"
                                                 BorderThickness="1"
                                                 Margin="4"

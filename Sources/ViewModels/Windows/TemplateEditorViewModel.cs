@@ -24,7 +24,7 @@ namespace ForumParser.ViewModels.Windows
 
         #region Auto-properties
 
-        public ObservableCollection<TemplateViewModel> Templates { get; } = new ObservableCollection<TemplateViewModel>();
+        public ObservableCollection<ChartTemplateViewModel> Templates { get; } = new ObservableCollection<ChartTemplateViewModel>();
 
         public ObservableCollection<QuestionChartMapping> QuestionTemplateConnections { get; } = new ObservableCollection<QuestionChartMapping>();
 
@@ -61,7 +61,7 @@ namespace ForumParser.ViewModels.Windows
         {
             _viewProvider = viewProvider;
             CreateNewChartCommand = new DelegateCommand<PollQuestion>( CreateNewChartCommandHandler );
-            AddQuestionToTemplateCommand = new DelegateCommand<Tuple<TemplateViewModel, PollQuestion>>( AddQuestionToTemplateCommandHandler );
+            AddQuestionToTemplateCommand = new DelegateCommand<Tuple<ChartTemplateViewModel, PollQuestion>>( AddQuestionToTemplateCommandHandler );
             RemoveQuestionFromTemplateCommand = new DelegateCommand<PollQuestion>( RemoveQuestionFromTemplateCommandHandler );
             SetEqualSizeCommand = new DelegateCommand( SetEqualSizeCommandHandler );
         }
@@ -80,7 +80,7 @@ namespace ForumParser.ViewModels.Windows
             }
         }
 
-        private void AddQuestionToTemplate( PollQuestion question, TemplateViewModel targetTemplate )
+        private void AddQuestionToTemplate( PollQuestion question, ChartTemplateViewModel targetTemplate )
         {
             var questionViewModel = Questions.FirstOrDefault( viewModel => viewModel.Question == question );
             if ( questionViewModel == null )
@@ -127,13 +127,13 @@ namespace ForumParser.ViewModels.Windows
             if ( question == null )
                 throw new ArgumentNullException( nameof( question ) );
 
-            var newChartViewModel = new TemplateViewModel( question.Answers.Count );
+            var newChartViewModel = new ChartTemplateViewModel( question.Answers.Count );
             Templates.Add( newChartViewModel );
 
             AddQuestionToTemplate( question, newChartViewModel );
         }
 
-        private void AddQuestionToTemplateCommandHandler( Tuple<TemplateViewModel, PollQuestion> param )
+        private void AddQuestionToTemplateCommandHandler( Tuple<ChartTemplateViewModel, PollQuestion> param )
         {
             var targetChart = param.Item1;
             var question = param.Item2;
@@ -173,9 +173,15 @@ namespace ForumParser.ViewModels.Windows
         #endregion
 
 
-        public void EditChartTemplate( TemplateViewModel templateViewModel )
+        public void EditChartTemplate( ChartTemplateViewModel templateViewModel )
         {
             var result = _viewProvider.Show<TemplatePropertiesEditorViewModel>( this, propertiesViewModel => propertiesViewModel.Template = templateViewModel );
+        }
+
+        public void InitEditor( ICollection<ChartTemplateViewModel> templates, ForumTopic forumTopic )
+        {
+            ForumTopic = forumTopic;
+            Templates.Clear();
         }
     }
 
@@ -184,7 +190,7 @@ namespace ForumParser.ViewModels.Windows
         #region Auto-properties
 
         public PollQuestionChartViewModel Question { get; }
-        public TemplateViewModel Template { get; }
+        public ChartTemplateViewModel Template { get; }
 
         #endregion
 
@@ -194,7 +200,7 @@ namespace ForumParser.ViewModels.Windows
         /// <summary>
         ///     Initializes a new instance of the <see cref="T:System.Object" /> class.
         /// </summary>
-        public QuestionChartMapping( PollQuestionChartViewModel question, TemplateViewModel template )
+        public QuestionChartMapping( PollQuestionChartViewModel question, ChartTemplateViewModel template )
         {
             Question = question;
             Template = template;

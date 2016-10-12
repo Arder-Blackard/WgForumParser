@@ -130,6 +130,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Sources\Models\ChartTemplate.cs" />
+    <Compile Include="Sources\Models\ParserRules.cs" />
     <Compile Include="Sources\Services\ISingletonService.cs" />
     <Compile Include="Sources\Services\SettingsManager.cs" />
     <Compile Include="Sources\ViewModels\Controls\PollQuestionChartViewModel.cs" />
@@ -161,7 +163,7 @@
     <Compile Include="Sources\ViewModels\Windows\MainWindowViewModel.cs" />
     <Compile Include="Sources\Services\CookieService.cs" />
     <Compile Include="Sources\ViewModels\UserViewModel.cs" />
-    <Compile Include="Sources\ViewModels\Controls\TemplateViewModel.cs" />
+    <Compile Include="Sources\ViewModels\Controls\ChartTemplateViewModel.cs" />
     <Compile Include="Sources\ViewModels\Windows\TemplateEditorViewModel.cs" />
     <Compile Include="Sources\ViewModels\WpfLogger.cs" />
     <Compile Include="Sources\Views\CefHandlers\DialogHandler.cs" />
@@ -169,8 +171,8 @@
     <Compile Include="Sources\Views\Controls\CefWebBrowser.cs" />
     <Compile Include="Sources\Views\Controls\EvenlyDistributedColumnGrid.cs" />
     <Compile Include="Sources\Views\Controls\EvenlyDistributedRowGrid.cs" />
-    <Compile Include="Sources\Views\Controls\TemplateChart.xaml.cs">
-      <DependentUpon>TemplateChart.xaml</DependentUpon>
+    <Compile Include="Sources\Views\Controls\ChartTemplateView.xaml.cs">
+      <DependentUpon>ChartTemplateView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Sources\Views\Controls\PollQuestionChart.xaml.cs">
       <DependentUpon>PollQuestionChart.xaml</DependentUpon>
@@ -187,7 +189,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Sources\Views\Controls\TemplateChart.xaml">
+    <Page Include="Sources\Views\Controls\ChartTemplateView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

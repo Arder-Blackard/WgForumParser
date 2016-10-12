@@ -17,6 +17,7 @@ using CommonLib.Logging;
 using ForumParser.Exceptions;
 using ForumParser.Models;
 using ForumParser.Services;
+using ForumParser.ViewModels.Controls;
 using Newtonsoft.Json;
 using WpfCommon.Commands;
 using WpfCommon.Services;
@@ -81,6 +82,7 @@ namespace ForumParser.ViewModels.Windows
         private int _usersWithVoteAndFeedbackCount;
         private int _usersWithVoteOnlyCount;
         private int _votedUsersCount;
+        private ICollection<ChartTemplateViewModel> _templates;
 
         #endregion
 
@@ -138,6 +140,17 @@ namespace ForumParser.ViewModels.Windows
             {
                 if ( SetValue( ref _forumTopic, value ) )
                     SetUsers( _forumTopic.Users );
+            }
+        }
+
+        public ICollection<ChartTemplateViewModel> Templates
+        {
+            get { return _templates; }
+            set
+            {
+                if ( SetValue( ref _templates, value ) )
+                {
+                }
             }
         }
 
@@ -355,8 +368,10 @@ namespace ForumParser.ViewModels.Windows
         {
             ExecuteAndCatchExceptions( () =>
             {
-                var dialogResult = _viewProvider.Show<TemplateEditorViewModel>( this, viewModel => viewModel.ForumTopic = ForumTopic );
-
+                var dialogResult = _viewProvider.Show<TemplateEditorViewModel>( this, viewModel =>
+                {
+                    viewModel.InitEditor( Templates, ForumTopic );
+                } );
             } );
         }
 
@@ -761,15 +776,15 @@ namespace ForumParser.ViewModels.Windows
 
             UsersWithVoteAndFeedback = new CollectionViewSource { Source = _users }.View;
             UsersWithVoteAndFeedback.Filter = UsersWithVoteAndFeedbackFilter;
-            UsersWithVoteAndFeedbackCount = _users.Where(UsersWithVoteAndFeedbackFilter).Count();
+            UsersWithVoteAndFeedbackCount = _users.Where( UsersWithVoteAndFeedbackFilter ).Count();
 
             UsersWithVoteOnly = new CollectionViewSource { Source = _users }.View;
             UsersWithVoteOnly.Filter = UsersWithVoteOnlyFilter;
-            UsersWithVoteOnlyCount = _users.Where(UsersWithVoteOnlyFilter).Count();
+            UsersWithVoteOnlyCount = _users.Where( UsersWithVoteOnlyFilter ).Count();
 
             UsersWithFeedbackOnly = new CollectionViewSource { Source = _users }.View;
             UsersWithFeedbackOnly.Filter = UsersWithFeedbackOnlyFilter;
-            UsersWithFeedbackOnlyCount = _users.Where(UsersWithFeedbackOnlyFilter).Count();
+            UsersWithFeedbackOnlyCount = _users.Where( UsersWithFeedbackOnlyFilter ).Count();
         }
 
         private static bool UsersWithFeedbackOnlyFilter( object u )

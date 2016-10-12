@@ -23,7 +23,7 @@
 
             <Border Grid.Row="0">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    <controls:TemplateChart DataContext="{Binding Template}" />
+                    <controls:ChartTemplateView DataContext="{Binding Template}" />
                 </ScrollViewer>
             </Border>
 

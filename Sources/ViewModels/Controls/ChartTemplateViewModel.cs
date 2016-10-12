@@ -13,7 +13,7 @@ namespace ForumParser.ViewModels.Controls
     /// <summary>
     ///     Describes groupped charts template.
     /// </summary>
-    public class TemplateViewModel : SimpleViewModelBase
+    public class ChartTemplateViewModel : SimpleViewModelBase
     {
         #region Fields
 
@@ -30,6 +30,8 @@ namespace ForumParser.ViewModels.Controls
         #region Auto-properties
 
         public ObservableCollection<QuestionDataSeries> Series { get; } = new ObservableCollection<QuestionDataSeries>();
+
+        public ChartTemplate Template { get; }
 
         #endregion
 
@@ -95,9 +97,10 @@ namespace ForumParser.ViewModels.Controls
 
         #region Initialization
 
-        public TemplateViewModel( int answersCount )
+        public ChartTemplateViewModel( int answersCount )
         {
             AnswersCount = answersCount;
+            Template = new ChartTemplate { Width = 480, Height = 360, };
         }
 
         #endregion
@@ -146,6 +149,13 @@ namespace ForumParser.ViewModels.Controls
 
             if ( Series.Count > 0 )
                 RebuildChart();
+        }
+
+        public ChartTemplate GetTemplate()
+        {
+            var template = new ChartTemplate();
+
+            return template;
         }
 
         #endregion
