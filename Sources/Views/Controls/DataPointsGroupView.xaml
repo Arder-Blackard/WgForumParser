@@ -20,7 +20,7 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ListBox>
-        <Button Grid.Column="1" Content=">" Margin="4" Command="{Binding SetTextOverrideCommand}" CommandParameter="{Binding ElementName=ListBox, Path=SelectedValue.Text}" />
+        <Button Grid.Column="1" Content=">" Margin="4" Command="{Binding SetTextCustomCommand}" CommandParameter="{Binding ElementName=ListBox, Path=SelectedValue.Text}" />
         <TextBox Grid.Column="2" TextWrapping="Wrap" AcceptsReturn="True" Margin="4" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" />
     </Grid>
 

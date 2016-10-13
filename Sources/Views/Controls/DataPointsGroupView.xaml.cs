@@ -18,7 +18,7 @@ namespace ForumParser.Views.Controls
         {
             var text = (sender as ContentControl)?.Content?.ToString();
             if (text != null)
-                (DataContext as DataPointsGroup)?.SetTextOverrideCommand?.Execute( text );
+                (DataContext as DataPointsGroup)?.SetTextCustomCommand?.Execute( text );
 
         }
     }

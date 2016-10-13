@@ -44,7 +44,7 @@
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" Width="32" Height="18" BorderThickness="1" BorderBrush="Gray"
                                     Background="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=(ItemsControl.AlternationIndex), Converter={StaticResource ColumnColorConverter}}" />
-                            <TextBlock Grid.Column="1" Text="{Binding Text}" HorizontalAlignment="Stretch"
+                            <TextBlock Grid.Column="1" Text="{Binding CustomText}" HorizontalAlignment="Stretch"
                                        Padding="4, 0" />
                         </Grid>
                     </DataTemplate>

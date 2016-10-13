@@ -370,7 +370,8 @@ namespace ForumParser.ViewModels.Windows
             {
                 var dialogResult = _viewProvider.Show<TemplateEditorViewModel>( this, viewModel =>
                 {
-                    viewModel.InitEditor( Templates, ForumTopic );
+                    ForumTopic forumTopic = ForumTopic;
+                    viewModel.LoadEditor( Templates, forumTopic.Poll.Questions );
                 } );
             } );
         }

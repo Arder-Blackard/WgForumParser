@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace ForumParser.Models
 {
@@ -10,7 +11,7 @@ namespace ForumParser.Models
         public double Height { get; set; }
 
         public ICollection<TemplateQuestion> Questions { get; set; }
-        public ICollection<string> AnswersText { get; set; }
+        public ICollection<string> CustomAnswers { get; set; }
 
         #endregion
     }
@@ -20,16 +21,40 @@ namespace ForumParser.Models
         #region Auto-properties
 
         /// <summary>
-        ///     The origianl text of the question.
+        ///     The original text of the question.
         /// </summary>
         public string QuestionText { get; set; }
 
         /// <summary>
         ///     The text overriden by user.
         /// </summary>
-        public string Text { get; set; }
+        public string CustomText { get; set; }
 
+        /// <summary>
+        ///     Question answers text.
+        /// </summary>
         public IList<string> Answers { get; set; }
+
+        #endregion
+
+
+        #region Initialization
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="TemplateQuestion" /> class.
+        /// </summary>
+        public TemplateQuestion()
+        {
+        }
+
+        /// <summary>
+        ///     Creates a new <see cref="TemplateQuestion" /> class instance from the specified <param name="question" />.
+        /// </summary>
+        public TemplateQuestion( PollQuestion question )
+        {
+            QuestionText = question.Text;
+            Answers = question.Answers.Select( a => a.Text ).ToList();
+        }
 
         #endregion
     }

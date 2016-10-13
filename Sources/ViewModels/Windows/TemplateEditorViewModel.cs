@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
+using CommonLib.Extensions;
 using ForumParser.Models;
 using ForumParser.ViewModels.Controls;
 using WpfCommon.Commands;
@@ -15,40 +16,91 @@ namespace ForumParser.ViewModels.Windows
     {
         #region Fields
 
-        private ForumTopic _forumTopic;
-        private ICollection<PollQuestionChartViewModel> _questions;
         private readonly IViewProvider _viewProvider;
+
+        private ObservableCollection<PollQuestionChartViewModel> _questions;
+        private ObservableCollection<ChartTemplateViewModel> _templates = new ObservableCollection<ChartTemplateViewModel>();
+        private ObservableCollection<QuestionChartMapping> _questionTemplateConnections = new ObservableCollection<QuestionChartMapping>();
 
         #endregion
 
 
         #region Auto-properties
 
-        public ObservableCollection<ChartTemplateViewModel> Templates { get; } = new ObservableCollection<ChartTemplateViewModel>();
+        public double UnifiedWidth { get; set; }
 
-        public ObservableCollection<QuestionChartMapping> QuestionTemplateConnections { get; } = new ObservableCollection<QuestionChartMapping>();
+        public double UnifiedHeight { get; set; }
 
         #endregion
 
 
         #region Properties
 
-        public ICollection<PollQuestionChartViewModel> Questions
+        public ObservableCollection<ChartTemplateViewModel> Templates
+        {
+            get { return _templates; }
+            private set { SetValue( ref _templates, value ); }
+        }
+
+        public ObservableCollection<QuestionChartMapping> QuestionTemplateConnections
+        {
+            get { return _questionTemplateConnections; }
+            private set { SetValue( ref _questionTemplateConnections, value ); }
+        }
+
+        public ObservableCollection<PollQuestionChartViewModel> Questions
         {
             get { return _questions; }
-            set { SetValue( ref _questions, value ); }
+            private set { SetValue( ref _questions, value ); }
         }
 
         public string ViewTitle => "Редактор шаблонов";
 
-        public ForumTopic ForumTopic
+        #endregion
+
+
+        #region Commands
+
+        public ICommand AddQuestionToTemplateCommand { get; }
+        public ICommand CreateNewChartCommand { get; }
+        public ICommand RemoveQuestionFromTemplateCommand { get; }
+        public ICommand SetEqualSizeCommand { get; }
+
+        private void AddQuestionToTemplateCommandHandler( Tuple<ChartTemplateViewModel, PollQuestion> param )
         {
-            get { return _forumTopic; }
-            set
+            var targetChart = param.Item1;
+            var question = param.Item2;
+
+            if ( question == null )
+                throw new ArgumentNullException( nameof( question ) );
+            if ( targetChart == null )
+                throw new ArgumentNullException( nameof( targetChart ) );
+
+            AddQuestionToTemplate( question, targetChart );
+        }
+
+        private void CreateNewChartCommandHandler( PollQuestion question )
+        {
+            if ( question == null )
+                throw new ArgumentNullException( nameof( question ) );
+
+            var newChartViewModel = new ChartTemplateViewModel( question.Answers.Count );
+            Templates.Add( newChartViewModel );
+
+            AddQuestionToTemplate( question, newChartViewModel );
+        }
+
+        private void RemoveQuestionFromTemplateCommandHandler( PollQuestion question )
+        {
+            RemoveQuestionFromTemplate( question );
+        }
+
+        private void SetEqualSizeCommandHandler()
+        {
+            foreach ( var template in Templates )
             {
-                if ( !SetValue( ref _forumTopic, value ) )
-                    return;
-                InitQuestions();
+                template.Width = UnifiedWidth;
+                template.Height = UnifiedHeight;
             }
         }
 
@@ -69,16 +121,47 @@ namespace ForumParser.ViewModels.Windows
         #endregion
 
 
-        #region Non-public methods
+        #region Public methods
 
-        private void SetEqualSizeCommandHandler()
+        public void EditChartTemplate( ChartTemplateViewModel templateViewModel )
         {
-            foreach ( var template in Templates )
+            _viewProvider.Show<TemplatePropertiesEditorViewModel>( this, propertiesViewModel => propertiesViewModel.Template = templateViewModel );
+        }
+
+        public void LoadEditor( ICollection<ChartTemplate> templates, IList<PollQuestion> pollQuestions )
+        {
+            Questions = new ObservableCollection<PollQuestionChartViewModel>( pollQuestions.Select( question => new PollQuestionChartViewModel( question ) ) );
+
+            //  Find templates matching the forum topic questions
+
+            Templates.Clear();
+
+            var questionsMap = Questions.ToDictionary( question => question.Text, StringComparer.OrdinalIgnoreCase );
+
+            foreach ( var template in templates )
             {
-                template.Width = UnifiedWidth;
-                template.Height = UnifiedHeight;
+                var matchingQuestions = new List<KeyValuePair<TemplateQuestion, PollQuestion>>();
+
+                var matches = template.Questions.Select( question => new { TemplateQuestion = question, PollQuestion = FindMatchingPollQuestion( question, questionsMap ) } )
+                                      .Where( pair => pair.PollQuestion != null );
+
+                foreach (var pair in )
+
+                if ( matchingQuestions.Any() )
+                {
+                    var templateViewModel = new ChartTemplateViewModel( matchingQuestions );
+                    Templates.Add( templateViewModel );
+
+                    foreach ( var questionViewModel in matchingQuestions )
+                        QuestionTemplateConnections.Add( new QuestionChartMapping( questionViewModel, templateViewModel ) );
+                }
             }
         }
+
+        #endregion
+
+
+        #region Non-public methods
 
         private void AddQuestionToTemplate( PollQuestion question, ChartTemplateViewModel targetTemplate )
         {
@@ -103,54 +186,6 @@ namespace ForumParser.ViewModels.Windows
             QuestionTemplateConnections.Add( new QuestionChartMapping( questionViewModel, targetTemplate ) );
         }
 
-        private void InitQuestions()
-        {
-            Questions = _forumTopic.Poll.Questions.Select( question => new PollQuestionChartViewModel( question ) ).ToArray();
-        }
-
-        #endregion
-
-
-        #region Commands
-
-        public ICommand AddQuestionToTemplateCommand { get; }
-        public ICommand RemoveQuestionFromTemplateCommand { get; }
-        public ICommand CreateNewChartCommand { get; }
-        public ICommand SetEqualSizeCommand { get; }
-
-        public double UnifiedWidth { get; set; }
-
-        public double UnifiedHeight { get; set; }
-
-        private void CreateNewChartCommandHandler( PollQuestion question )
-        {
-            if ( question == null )
-                throw new ArgumentNullException( nameof( question ) );
-
-            var newChartViewModel = new ChartTemplateViewModel( question.Answers.Count );
-            Templates.Add( newChartViewModel );
-
-            AddQuestionToTemplate( question, newChartViewModel );
-        }
-
-        private void AddQuestionToTemplateCommandHandler( Tuple<ChartTemplateViewModel, PollQuestion> param )
-        {
-            var targetChart = param.Item1;
-            var question = param.Item2;
-
-            if ( question == null )
-                throw new ArgumentNullException( nameof( question ) );
-            if ( targetChart == null )
-                throw new ArgumentNullException( nameof( targetChart ) );
-
-            AddQuestionToTemplate( question, targetChart );
-        }
-
-        private void RemoveQuestionFromTemplateCommandHandler( PollQuestion question )
-        {
-            RemoveQuestionFromTemplate( question );
-        }
-
         private void RemoveQuestionFromTemplate( PollQuestion question )
         {
             var questionViewModel = Questions.FirstOrDefault( viewModel => viewModel.Question == question );
@@ -170,19 +205,27 @@ namespace ForumParser.ViewModels.Windows
             }
         }
 
+        private static PollQuestionChartViewModel FindMatchingPollQuestion( TemplateQuestion templateQuestion, Dictionary<string, PollQuestionChartViewModel> questionsMap )
+        {
+            var pollQuestion = questionsMap.GetOrDefault( templateQuestion.QuestionText );
+
+            //  Determine cases when match is unsuccessful
+            if ( pollQuestion == null )
+                return null;
+
+            if ( pollQuestion.Answers.Count != templateQuestion.Answers.Count )
+                return null;
+
+            if ( pollQuestion.Answers
+                             .Zip( templateQuestion.Answers, ( pollAnswer, templateAnswerText ) => pollAnswer.Text.Equals( templateAnswerText, StringComparison.OrdinalIgnoreCase ) )
+                             .All( match => match ) )
+                return null;
+
+            //  The matching poll question has been found
+            return pollQuestion;
+        }
+
         #endregion
-
-
-        public void EditChartTemplate( ChartTemplateViewModel templateViewModel )
-        {
-            var result = _viewProvider.Show<TemplatePropertiesEditorViewModel>( this, propertiesViewModel => propertiesViewModel.Template = templateViewModel );
-        }
-
-        public void InitEditor( ICollection<ChartTemplateViewModel> templates, ForumTopic forumTopic )
-        {
-            ForumTopic = forumTopic;
-            Templates.Clear();
-        }
     }
 
     public class QuestionChartMapping

@@ -20,16 +20,14 @@ namespace ForumParser.ViewModels.Controls
         private int _answersCount;
         private ICollection<DataPointsGroup> _columnGroups;
         private ICollection<string> _gridLines;
-        private double _height = 360;
         private double _maxValue;
-        private double _width = 480;
 
         #endregion
 
 
         #region Auto-properties
 
-        public ObservableCollection<QuestionDataSeries> Series { get; } = new ObservableCollection<QuestionDataSeries>();
+        public ObservableCollection<QuestionSeriesViewModel> Series { get; } = new ObservableCollection<QuestionSeriesViewModel>();
 
         public ChartTemplate Template { get; }
 
@@ -43,8 +41,15 @@ namespace ForumParser.ViewModels.Controls
         /// </summary>
         public double Width
         {
-            get { return _width; }
-            set { SetValue( ref _width, value ); }
+            get { return Template.Width; }
+            set
+            {
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if ( Template.Width == value )
+                    return;
+                Template.Width = value;
+                OnPropertyChanged();
+            }
         }
 
         /// <summary>
@@ -52,8 +57,15 @@ namespace ForumParser.ViewModels.Controls
         /// </summary>
         public double Height
         {
-            get { return _height; }
-            set { SetValue( ref _height, value ); }
+            get { return Template.Height; }
+            set
+            {
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if ( Template.Height == value )
+                    return;
+                Template.Height = value;
+                OnPropertyChanged();
+            }
         }
 
         /// <summary>
@@ -100,7 +112,19 @@ namespace ForumParser.ViewModels.Controls
         public ChartTemplateViewModel( int answersCount )
         {
             AnswersCount = answersCount;
-            Template = new ChartTemplate { Width = 480, Height = 360, };
+            Template = new ChartTemplate { Width = 480, Height = 360 };
+        }
+
+        public ChartTemplateViewModel( ChartTemplate template, Dictionary<string, PollQuestionChartViewModel> questions )
+        {
+            AnswersCount = template.Questions.FirstOrDefault()?.Answers.Count ?? 0;
+
+            Template = template;
+
+            foreach ( var question in questions )
+                Series.Add( new QuestionSeriesViewModel( new TemplateQuestion( question ) ) );
+
+            RebuildChart();
         }
 
         #endregion
@@ -118,10 +142,13 @@ namespace ForumParser.ViewModels.Controls
             if ( question.Answers.Count != AnswersCount )
                 throw new ArgumentException( $"Cannot add question with {question.Answers.Count} answers to a group with {AnswersCount} answers" );
 
-            if ( Series.Any( series => series.Question == question ) )
+            if ( Series.Any( series => series.TemplateQuestion.QuestionText == question.Text ) )
                 return;
 
-            Series.Add( new QuestionDataSeries( question ) );
+            var templateQuestion = new TemplateQuestion( question );
+            Template.Questions.Add( templateQuestion );
+
+            Series.Add( new QuestionSeriesViewModel( templateQuestion ) );
             RebuildChart();
         }
 
@@ -132,7 +159,7 @@ namespace ForumParser.ViewModels.Controls
         /// <returns>True if the question can be added to the group.</returns>
         public bool AcceptsQuestion( PollQuestion question )
         {
-            return question.Answers.Count == AnswersCount && Series.All( s => s.Question != question );
+            return question.Answers.Count == AnswersCount && Series.All( s => s.TemplateQuestion.QuestionText != question.Text );
         }
 
         /// <summary>
@@ -142,7 +169,7 @@ namespace ForumParser.ViewModels.Controls
         public void RemoveQuestion( PollQuestion question )
         {
             var seriesIndex =
-                Series.Select( ( series, index ) => new { Index = index, question = series.Question } ).FirstOrDefault( a => a.question == question )?.Index;
+                Series.Select( ( series, index ) => new { Index = index, series.TemplateQuestion.QuestionText } ).FirstOrDefault( a => a.QuestionText == question.Text )?.Index;
 
             if ( seriesIndex != null )
                 Series.RemoveAt( (int) seriesIndex );
@@ -175,7 +202,7 @@ namespace ForumParser.ViewModels.Controls
 
             ColumnGroups = (from answerIndex in Enumerable.Range( 0, AnswersCount )
                             select new DataPointsGroup( from s in Series
-                                                        let answer = s.Question.Answers[answerIndex]
+                                                        let answer = s.TemplateQuestion.Answers[answerIndex]
                                                         select new DataPoint( answer.Text, answer.Count, MaxValue ) )
                            ).ToList();
         }
@@ -185,7 +212,7 @@ namespace ForumParser.ViewModels.Controls
         /// </summary>
         private void RebuildGrid()
         {
-            double maxValue = Series.SelectMany( s => s.Question.Answers ).Max( a => a.Count );
+            double maxValue = Series.SelectMany( s => s.TemplateQuestion.Answers ).Max( a => a.Count );
             double gridStep;
 
             CalculateGridParameters( ref maxValue, out gridStep );
@@ -214,7 +241,55 @@ namespace ForumParser.ViewModels.Controls
     /// <summary>
     ///     Represents data series generated from a question answers.
     /// </summary>
-    public class QuestionDataSeries : SimpleViewModelBase
+    public class QuestionSeriesViewModel : SimpleViewModelBase
+    {
+        #region Auto-properties
+
+        /// <summary>
+        ///     Reference to the question template.
+        /// </summary>
+        public TemplateQuestion TemplateQuestion { get; }
+
+        public PollQuestion PollQuestion { get; }
+
+        #endregion
+
+
+        #region Properties
+
+        /// <summary>
+        ///     Question display text.
+        /// </summary>
+        public string CustomText
+        {
+            get { return TemplateQuestion.CustomText; }
+            set
+            {
+                if ( TemplateQuestion.CustomText == value )
+                    return;
+                TemplateQuestion.CustomText = value;
+                OnPropertyChanged();
+            }
+        }
+
+        #endregion
+
+
+        #region Initialization
+
+        public QuestionSeriesViewModel( TemplateQuestion templateQuestion, PollQuestion pollQuestion )
+        {
+            TemplateQuestion = templateQuestion;
+            PollQuestion = pollQuestion;
+        }
+
+        #endregion
+    }
+
+    /// <summary>
+    ///     Represents a single answer columns group.
+    /// </summary>
+    public class DataPointsGroup : SimpleViewModelBase
     {
         #region Fields
 
@@ -226,67 +301,29 @@ namespace ForumParser.ViewModels.Controls
         #region Auto-properties
 
         /// <summary>
-        ///     Reference to the poll question.
-        /// </summary>
-        public PollQuestion Question { get; }
-
-        #endregion
-
-
-        #region Properties
-
-        /// <summary>
-        ///     Question display text.
-        /// </summary>
-        public string Text
-        {
-            get { return _text; }
-            set { SetValue( ref _text, value ); }
-        }
-
-        #endregion
-
-
-        #region Initialization
-
-        public QuestionDataSeries( PollQuestion question )
-        {
-            Question = question;
-            Text = question.Text;
-        }
-
-        #endregion
-    }
-
-    /// <summary>
-    ///     Represents a single answer columns group.
-    /// </summary>
-    public class DataPointsGroup : SimpleViewModelBase
-    {
-        private string _text;
-
-
-        #region Auto-properties
-
-        /// <summary>
         ///     Columns group columns.
         /// </summary>
         public ICollection<DataPoint> DataPoints { get; }
-
-        public string Text
-        {
-            get { return _text; }
-            set { SetValue( ref _text, value ); }
-        }
 
         public bool IsTextConflicted { get; set; }
 
         #endregion
 
 
+        #region Properties
+
+        public string Text
+        {
+            get { return _text; }
+            set { SetValue( ref _text, value ); }
+        }
+
+        #endregion
+
+
         #region Commands
 
-        public ICommand SetTextOverrideCommand { get; }
+        public ICommand SetTextCustomCommand { get; }
 
         #endregion
 
@@ -302,7 +339,7 @@ namespace ForumParser.ViewModels.Controls
             IsTextConflicted = DataPoints.Skip( 1 ).Any( dataPoint => dataPoint.Text != firstDataPointText );
             Text = IsTextConflicted ? "???" : firstDataPointText;
 
-            SetTextOverrideCommand = new DelegateCommand<string>( SetTextOverride );
+            SetTextCustomCommand = new DelegateCommand<string>( SetTextOverride );
         }
 
         #endregion
