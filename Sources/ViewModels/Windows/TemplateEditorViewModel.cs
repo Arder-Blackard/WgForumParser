@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
 using CommonLib.Extensions;
+using ForumParser.Collections;
 using ForumParser.Models;
 using ForumParser.ViewModels.Controls;
 using WpfCommon.Commands;
@@ -18,9 +19,9 @@ namespace ForumParser.ViewModels.Windows
 
         private readonly IViewProvider _viewProvider;
 
-        private ObservableCollection<PollQuestionChartViewModel> _questions;
-        private ObservableCollection<ChartTemplateViewModel> _templates = new ObservableCollection<ChartTemplateViewModel>();
-        private ObservableCollection<QuestionChartMapping> _questionTemplateConnections = new ObservableCollection<QuestionChartMapping>();
+        private AsyncObservableCollection<PollQuestionChartViewModel> _questions;
+        private AsyncObservableCollection<ChartTemplateViewModel> _templates = new AsyncObservableCollection<ChartTemplateViewModel>();
+        private AsyncObservableCollection<QuestionChartMapping> _questionTemplateConnections = new AsyncObservableCollection<QuestionChartMapping>();
 
         #endregion
 
@@ -36,19 +37,19 @@ namespace ForumParser.ViewModels.Windows
 
         #region Properties
 
-        public ObservableCollection<ChartTemplateViewModel> Templates
+        public AsyncObservableCollection<ChartTemplateViewModel> Templates
         {
             get { return _templates; }
             private set { SetValue( ref _templates, value ); }
         }
 
-        public ObservableCollection<QuestionChartMapping> QuestionTemplateConnections
+        public AsyncObservableCollection<QuestionChartMapping> QuestionTemplateConnections
         {
             get { return _questionTemplateConnections; }
             private set { SetValue( ref _questionTemplateConnections, value ); }
         }
 
-        public ObservableCollection<PollQuestionChartViewModel> Questions
+        public AsyncObservableCollection<PollQuestionChartViewModel> Questions
         {
             get { return _questions; }
             private set { SetValue( ref _questions, value ); }
@@ -130,9 +131,8 @@ namespace ForumParser.ViewModels.Windows
 
         public void LoadEditor( ICollection<ChartTemplate> templates, IList<PollQuestion> pollQuestions )
         {
-            Questions = new ObservableCollection<PollQuestionChartViewModel>( pollQuestions.Select( question => new PollQuestionChartViewModel( question ) ) );
-
-            //  Find templates matching the forum topic questions
+            // Setup questions view models
+            Questions = new AsyncObservableCollection<PollQuestionChartViewModel>( pollQuestions.Select( question => new PollQuestionChartViewModel( question ) ) );
 
             Templates.Clear();
 
@@ -140,20 +140,22 @@ namespace ForumParser.ViewModels.Windows
 
             foreach ( var template in templates )
             {
-                var matchingQuestions = new List<KeyValuePair<TemplateQuestion, PollQuestion>>();
+                //  Find questions matching the template
+                var matches = template.Questions
+                                      .Select( question => new { TemplateQuestion = question, PollQuestionViewModel = FindMatchingPollQuestion( question, questionsMap ) } )
+                                      .Where( pair => pair.PollQuestionViewModel != null )
+                                      .ToList();
 
-                var matches = template.Questions.Select( question => new { TemplateQuestion = question, PollQuestion = FindMatchingPollQuestion( question, questionsMap ) } )
-                                      .Where( pair => pair.PollQuestion != null );
-
-                foreach (var pair in )
-
-                if ( matchingQuestions.Any() )
+                if ( matches.Any() )
                 {
-                    var templateViewModel = new ChartTemplateViewModel( matchingQuestions );
+                    //  Add template view model
+                    var matchingQuestions = matches.Select( match => new KeyValuePair<TemplateQuestion, PollQuestion>( match.TemplateQuestion, match.PollQuestionViewModel.Question ) );
+                    var templateViewModel = new ChartTemplateViewModel( template, matchingQuestions );
                     Templates.Add( templateViewModel );
 
-                    foreach ( var questionViewModel in matchingQuestions )
-                        QuestionTemplateConnections.Add( new QuestionChartMapping( questionViewModel, templateViewModel ) );
+                    //  Add questions-template connections 
+                    foreach ( var match in matches )
+                        QuestionTemplateConnections.Add( new QuestionChartMapping( match.PollQuestionViewModel, templateViewModel ) );
                 }
             }
         }
@@ -216,9 +218,9 @@ namespace ForumParser.ViewModels.Windows
             if ( pollQuestion.Answers.Count != templateQuestion.Answers.Count )
                 return null;
 
-            if ( pollQuestion.Answers
-                             .Zip( templateQuestion.Answers, ( pollAnswer, templateAnswerText ) => pollAnswer.Text.Equals( templateAnswerText, StringComparison.OrdinalIgnoreCase ) )
-                             .All( match => match ) )
+            if ( !pollQuestion.Answers
+                              .Zip( templateQuestion.Answers, ( pollAnswer, templateAnswerText ) => pollAnswer.Text.Equals( templateAnswerText, StringComparison.OrdinalIgnoreCase ) )
+                              .All( match => match ) )
                 return null;
 
             //  The matching poll question has been found

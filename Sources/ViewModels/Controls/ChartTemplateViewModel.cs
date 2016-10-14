@@ -17,7 +17,6 @@ namespace ForumParser.ViewModels.Controls
     {
         #region Fields
 
-        private int _answersCount;
         private ICollection<DataPointsGroup> _columnGroups;
         private ICollection<string> _gridLines;
         private double _maxValue;
@@ -89,11 +88,7 @@ namespace ForumParser.ViewModels.Controls
         /// <summary>
         ///     Number of answers in each question of the group.
         /// </summary>
-        public int AnswersCount
-        {
-            get { return _answersCount; }
-            set { SetValue( ref _answersCount, value ); }
-        }
+        public int AnswersCount => Template.CustomAnswers.Count;
 
         /// <summary>
         ///     Chart maximal value.
@@ -111,18 +106,15 @@ namespace ForumParser.ViewModels.Controls
 
         public ChartTemplateViewModel( int answersCount )
         {
-            AnswersCount = answersCount;
-            Template = new ChartTemplate { Width = 480, Height = 360 };
+            Template = new ChartTemplate { Width = 480, Height = 360, CustomAnswers = new string[answersCount] };
         }
 
-        public ChartTemplateViewModel( ChartTemplate template, Dictionary<string, PollQuestionChartViewModel> questions )
+        public ChartTemplateViewModel( ChartTemplate template, IEnumerable<KeyValuePair<TemplateQuestion, PollQuestion>> questions )
         {
-            AnswersCount = template.Questions.FirstOrDefault()?.Answers.Count ?? 0;
-
             Template = template;
 
             foreach ( var question in questions )
-                Series.Add( new QuestionSeriesViewModel( new TemplateQuestion( question ) ) );
+                Series.Add( new QuestionSeriesViewModel( question.Key, question.Value ) );
 
             RebuildChart();
         }
@@ -139,7 +131,7 @@ namespace ForumParser.ViewModels.Controls
         /// <exception cref="ArgumentException">The question answers count doen't match that of the group.</exception>
         public void AddQuestion( PollQuestion question )
         {
-            if ( question.Answers.Count != AnswersCount )
+            if ( question.Answers.Count != Template.CustomAnswers.Count )
                 throw new ArgumentException( $"Cannot add question with {question.Answers.Count} answers to a group with {AnswersCount} answers" );
 
             if ( Series.Any( series => series.TemplateQuestion.QuestionText == question.Text ) )
@@ -148,7 +140,7 @@ namespace ForumParser.ViewModels.Controls
             var templateQuestion = new TemplateQuestion( question );
             Template.Questions.Add( templateQuestion );
 
-            Series.Add( new QuestionSeriesViewModel( templateQuestion ) );
+            Series.Add( new QuestionSeriesViewModel( templateQuestion, question ) );
             RebuildChart();
         }
 
@@ -178,13 +170,6 @@ namespace ForumParser.ViewModels.Controls
                 RebuildChart();
         }
 
-        public ChartTemplate GetTemplate()
-        {
-            var template = new ChartTemplate();
-
-            return template;
-        }
-
         #endregion
 
 
@@ -200,11 +185,21 @@ namespace ForumParser.ViewModels.Controls
 
             RebuildGrid();
 
-            ColumnGroups = (from answerIndex in Enumerable.Range( 0, AnswersCount )
-                            select new DataPointsGroup( from s in Series
-                                                        let answer = s.TemplateQuestion.Answers[answerIndex]
-                                                        select new DataPoint( answer.Text, answer.Count, MaxValue ) )
-                           ).ToList();
+            var list = new List<DataPointsGroup>();
+
+            for ( var answerIndex = 0; answerIndex < AnswersCount; answerIndex ++ )
+            {
+                var dataPointsGroup = new DataPointsGroup(
+                    answerIndex,
+                    Series.Select( s => s.PollQuestion.Answers[answerIndex] )
+                          .Select( a => new DataPoint( a.Text, a.Count, MaxValue ) )
+                          .ToList(),
+                    this );
+
+                list.Add( dataPointsGroup );
+            }
+
+            ColumnGroups = list;
         }
 
         /// <summary>
@@ -212,7 +207,7 @@ namespace ForumParser.ViewModels.Controls
         /// </summary>
         private void RebuildGrid()
         {
-            double maxValue = Series.SelectMany( s => s.TemplateQuestion.Answers ).Max( a => a.Count );
+            double maxValue = Series.SelectMany( s => s.PollQuestion.Answers ).Max( a => a.Count );
             double gridStep;
 
             CalculateGridParameters( ref maxValue, out gridStep );
@@ -293,7 +288,9 @@ namespace ForumParser.ViewModels.Controls
     {
         #region Fields
 
-        private string _text;
+        private ChartTemplateViewModel ChartViewModel { get; }
+
+        private int _groupIndex;
 
         #endregion
 
@@ -314,8 +311,12 @@ namespace ForumParser.ViewModels.Controls
 
         public string Text
         {
-            get { return _text; }
-            set { SetValue( ref _text, value ); }
+            get { return ChartViewModel.Template.CustomAnswers[_groupIndex]; }
+            set
+            {
+                ChartViewModel.Template.CustomAnswers[_groupIndex] = value;
+                OnPropertyChanged();
+            }
         }
 
         #endregion
@@ -330,8 +331,11 @@ namespace ForumParser.ViewModels.Controls
 
         #region Initialization
 
-        public DataPointsGroup( IEnumerable<DataPoint> dataPoints )
+        public DataPointsGroup( int groupIndex, IEnumerable<DataPoint> dataPoints, ChartTemplateViewModel chartViewModel )
         {
+            _groupIndex = groupIndex;
+            ChartViewModel = chartViewModel;
+
             DataPoints = dataPoints.ToArray();
 
             var firstDataPointText = DataPoints.First().Text;

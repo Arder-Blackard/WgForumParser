@@ -58,7 +58,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBox Grid.Column="0" TextWrapping="Wrap" AcceptsReturn="True" Margin="4" Text="{Binding TemplateQuestion.CustomText, Mode=OneWay}" />
                                     <Button Grid.Column="1" Content=">" Margin="4" />
-                                    <TextBox Grid.Column="2" TextWrapping="Wrap" AcceptsReturn="True" Margin="4" Text="{Binding CustomText}" />
+                                    <TextBox Grid.Column="2" TextWrapping="Wrap" AcceptsReturn="True" Margin="4" Text="{Binding CustomText, UpdateSourceTrigger=PropertyChanged}" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

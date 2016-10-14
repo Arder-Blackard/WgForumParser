@@ -130,6 +130,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Collections\AsyncObservableCollection.cs" />
     <Compile Include="Sources\Models\ChartTemplate.cs" />
     <Compile Include="Sources\Models\ParserRules.cs" />
     <Compile Include="Sources\Services\ISingletonService.cs" />

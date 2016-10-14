@@ -10,8 +10,8 @@ namespace ForumParser.Models
         public double Width { get; set; }
         public double Height { get; set; }
 
-        public ICollection<TemplateQuestion> Questions { get; set; }
-        public ICollection<string> CustomAnswers { get; set; }
+        public IList<TemplateQuestion> Questions { get; set; } = new List<TemplateQuestion>();
+        public IList<string> CustomAnswers { get; set; } 
 
         #endregion
     }
@@ -53,6 +53,7 @@ namespace ForumParser.Models
         public TemplateQuestion( PollQuestion question )
         {
             QuestionText = question.Text;
+            CustomText = question.Text;
             Answers = question.Answers.Select( a => a.Text ).ToList();
         }
 

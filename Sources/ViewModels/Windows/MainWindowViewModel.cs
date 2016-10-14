@@ -82,7 +82,7 @@ namespace ForumParser.ViewModels.Windows
         private int _usersWithVoteAndFeedbackCount;
         private int _usersWithVoteOnlyCount;
         private int _votedUsersCount;
-        private ICollection<ChartTemplateViewModel> _templates;
+        private ICollection<ChartTemplate> _templates = new List<ChartTemplate>();
 
         #endregion
 
@@ -143,15 +143,10 @@ namespace ForumParser.ViewModels.Windows
             }
         }
 
-        public ICollection<ChartTemplateViewModel> Templates
+        public ICollection<ChartTemplate> Templates
         {
             get { return _templates; }
-            set
-            {
-                if ( SetValue( ref _templates, value ) )
-                {
-                }
-            }
+            set { SetValue( ref _templates, value ); }
         }
 
         /// <summary>
@@ -368,11 +363,8 @@ namespace ForumParser.ViewModels.Windows
         {
             ExecuteAndCatchExceptions( () =>
             {
-                var dialogResult = _viewProvider.Show<TemplateEditorViewModel>( this, viewModel =>
-                {
-                    ForumTopic forumTopic = ForumTopic;
-                    viewModel.LoadEditor( Templates, forumTopic.Poll.Questions );
-                } );
+                var dialogResult = _viewProvider.Show<TemplateEditorViewModel>( this, viewModel => viewModel.LoadEditor( Templates, ForumTopic.Poll.Questions ) );
+                Templates = dialogResult.ViewModel.Templates.Select( tvm => tvm.Template ).ToList();
             } );
         }
 

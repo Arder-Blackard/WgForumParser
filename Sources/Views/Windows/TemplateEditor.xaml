@@ -15,7 +15,8 @@
                  d:DataContext="{d:DesignInstance d:Type={x:Type viewModels:TemplateEditorViewModel}, d:IsDesignTimeCreatable=True}"
                  SnapsToDevicePixels="True" Title="{Binding ViewTitle}"
                  Background="{x:Static SystemColors.ControlBrush}"
-                 Icon="/Resources/icons/FP.png">
+                 Icon="/Resources/icons/FP.png"
+                 Loaded="TemplateEditor_Loaded">
 
     <Window.Resources>
         <converters:ConnectionBreakerLocationConverter x:Key="ConnectionTopConverter" />
@@ -85,7 +86,7 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Button Height="13" Width="13" HorizontalAlignment="Left" VerticalAlignment="Top"
-                                Click="ConnectionBreaker_Click">
+                                Click="ConnectionBreaker_Click" SnapsToDevicePixels="True">
                             <Button.Margin>
                                 <MultiBinding Converter="{StaticResource ConnectionTopConverter}">
                                     <Binding Source="{StaticResource LeftOffset}" />

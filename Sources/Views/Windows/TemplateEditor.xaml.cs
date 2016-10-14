@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
@@ -41,12 +42,6 @@ namespace ForumParser.Views.Windows
         public TemplateEditor( TemplateEditorViewModel viewModel ) : base( viewModel )
         {
             InitializeComponent();
-
-            viewModel = DataContext as TemplateEditorViewModel;
-            if ( viewModel != null )
-                viewModel.QuestionTemplateConnections.CollectionChanged += QuestionsChartsMap_CollectionChanged;
-
-            DataContextChanged += TemplateEditor_DataContextChanged;
         }
 
         #endregion
@@ -54,40 +49,19 @@ namespace ForumParser.Views.Windows
 
         #region Event handlers
 
-        private void TemplateEditor_DataContextChanged( object sender, DependencyPropertyChangedEventArgs args )
-        {
-            var viewModel = args.OldValue as TemplateEditorViewModel;
-            if ( viewModel != null )
-                viewModel.QuestionTemplateConnections.CollectionChanged -= QuestionsChartsMap_CollectionChanged;
-
-            viewModel = args.NewValue as TemplateEditorViewModel;
-            if ( viewModel != null )
-                viewModel.QuestionTemplateConnections.CollectionChanged += QuestionsChartsMap_CollectionChanged;
-        }
-
         private void QuestionsChartsMap_CollectionChanged( object sender, NotifyCollectionChangedEventArgs args )
         {
             UpdateLayout();
 
             if ( args.Action == NotifyCollectionChangedAction.Add )
             {
-                var newConnections =
-                    from mapping in args.NewItems.OfType<QuestionChartMapping>()
-                    select new ConnectionCurve( QuestionsList.FindItemContainer( mapping.Question ).FindChildOfType<HotspotContainer>(),
-                                                ChartsList.FindItemContainer( mapping.Template ).FindChildOfType<HotspotContainer>(),
-                                                ConnectionsList );
-
-                foreach ( var connection in newConnections )
-                    Connections.Add( connection );
+                var newMappings = args.NewItems.OfType<QuestionChartMapping>();
+                AddConnectionCurves( newMappings );
             }
             else if ( args.Action == NotifyCollectionChangedAction.Remove )
             {
-                var oldQuestionViews = args.OldItems.OfType<QuestionChartMapping>()
-                                           .Select( mapping => QuestionsList.FindItemContainer( mapping.Question ).FindChildOfType<HotspotContainer>() )
-                                           .ToHashSet();
-
-                var connections = Connections.Where( connection => oldQuestionViews.Contains( connection.Left ) ).ToList();
-                connections.ForEach( connection => Connections.Remove( connection ) );
+                var oldMappings = args.OldItems.OfType<QuestionChartMapping>();
+                RemoveConnectionCurves( oldMappings );
             }
         }
 
@@ -194,6 +168,50 @@ namespace ForumParser.Views.Windows
             ConnectionsList.UpdateLayout();
         }
 
+        private void MergedChart_DoubleClick( object sender, MouseButtonEventArgs e )
+        {
+            var templateViewModel = (sender as ChartTemplateView)?.DataContext as ChartTemplateViewModel;
+
+            if ( templateViewModel != null )
+                ViewModel?.EditChartTemplate( templateViewModel );
+        }
+
+        private void TemplateEditor_Loaded( object sender, RoutedEventArgs e )
+        {
+            var questionTemplateConnections = (DataContext as TemplateEditorViewModel)?.QuestionTemplateConnections;
+            if ( questionTemplateConnections != null )
+            {
+                AddConnectionCurves( questionTemplateConnections );
+                questionTemplateConnections.CollectionChanged += QuestionsChartsMap_CollectionChanged;
+            }
+        }
+
+        #endregion
+
+
+        #region Non-public methods
+
+        private void RemoveConnectionCurves( IEnumerable<QuestionChartMapping> oldMappings )
+        {
+            var oldQuestionViews = oldMappings
+                .Select( mapping => QuestionsList.FindItemContainer( mapping.Question ).FindChildOfType<HotspotContainer>() )
+                .ToHashSet();
+
+            var connections = Connections.Where( connection => oldQuestionViews.Contains( connection.Left ) ).ToList();
+            connections.ForEach( connection => Connections.Remove( connection ) );
+        }
+
+        private void AddConnectionCurves( IEnumerable<QuestionChartMapping> newMappings )
+        {
+            var newConnections =
+                newMappings.Select( mapping => new ConnectionCurve( QuestionsList.FindItemContainer( mapping.Question ).FindChildOfType<HotspotContainer>(),
+                                                                    ChartsList.FindItemContainer( mapping.Template ).FindChildOfType<HotspotContainer>(),
+                                                                    ConnectionsList ) );
+
+            foreach ( var connection in newConnections )
+                Connections.Add( connection );
+        }
+
         #endregion
 
 
@@ -278,16 +296,5 @@ namespace ForumParser.Views.Windows
         }
 
         #endregion
-
-
-        private void MergedChart_DoubleClick( object sender, MouseButtonEventArgs e )
-        {
-            var templateViewModel = (sender as ChartTemplateView)?.DataContext as ChartTemplateViewModel;
-
-            if ( templateViewModel != null )
-            {
-                ViewModel?.EditChartTemplate( templateViewModel );
-            }
-        }
     }
 }
