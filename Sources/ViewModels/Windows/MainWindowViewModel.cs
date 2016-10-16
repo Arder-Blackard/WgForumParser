@@ -83,7 +83,7 @@ namespace ForumParser.ViewModels.Windows
         private int _usersWithVoteAndFeedbackCount;
         private int _usersWithVoteOnlyCount;
         private int _votedUsersCount;
-        private AsyncObservableCollection<ChartTemplatePreviewViewModel> _previewTemplates = new AsyncObservableCollection<ChartTemplatePreviewViewModel>();
+        private AsyncObservableCollection<PreviewChartTemplateViewModel> _previewTemplates = new AsyncObservableCollection<PreviewChartTemplateViewModel>();
 
         #endregion
 
@@ -144,7 +144,7 @@ namespace ForumParser.ViewModels.Windows
             }
         }
 
-        public AsyncObservableCollection<ChartTemplatePreviewViewModel> PreviewTemplates
+        public AsyncObservableCollection<PreviewChartTemplateViewModel> PreviewTemplates
         {
             get { return _previewTemplates; }
             set { SetValue( ref _previewTemplates, value ); }
@@ -395,7 +395,7 @@ namespace ForumParser.ViewModels.Windows
                 {
                     //  Add template view model
                     var matchingQuestions = matches.Select(match => new KeyValuePair<TemplateQuestion, PollQuestion>(match.TemplateQuestion, match.PollQuestion));
-                    var templateViewModel = new ChartTemplatePreviewViewModel( template, matchingQuestions );
+                    var templateViewModel = new PreviewChartTemplateViewModel( template, matchingQuestions );
                     PreviewTemplates.Add( templateViewModel );
                 }
             }

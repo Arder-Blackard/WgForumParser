@@ -131,7 +131,7 @@ namespace ForumParser.Views.Windows
                 return;
 
             var pollQuestion = (PollQuestion) e.Data.GetData( DragAndDropPollQuestionFormat );
-            if ( ((e.Source as ChartTemplateView)?.DataContext as ChartTemplateViewModel)?.AcceptsQuestion( pollQuestion ) == true )
+            if ( ((e.Source as ChartTemplateView)?.DataContext as EditableChartTemplateViewModel)?.AcceptsQuestion( pollQuestion ) == true )
                 e.Effects = DragDropEffects.Copy;
             else
                 e.Effects = DragDropEffects.None;
@@ -149,7 +149,7 @@ namespace ForumParser.Views.Windows
 
             var pollQuestion = (PollQuestion) e.Data.GetData( DragAndDropPollQuestionFormat );
 
-            var mergedChartViewModel = (e.Source as ChartTemplateView)?.DataContext as ChartTemplateViewModel;
+            var mergedChartViewModel = (e.Source as ChartTemplateView)?.DataContext as EditableChartTemplateViewModel;
             if ( mergedChartViewModel?.AcceptsQuestion( pollQuestion ) != true )
                 return;
 
@@ -170,7 +170,7 @@ namespace ForumParser.Views.Windows
 
         private void MergedChart_DoubleClick( object sender, MouseButtonEventArgs e )
         {
-            var templateViewModel = (sender as ChartTemplateView)?.DataContext as ChartTemplateViewModel;
+            var templateViewModel = (sender as ChartTemplateView)?.DataContext as EditableChartTemplateViewModel;
 
             if ( templateViewModel != null )
                 ViewModel?.EditChartTemplate( templateViewModel );

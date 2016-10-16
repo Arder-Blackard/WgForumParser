@@ -21,7 +21,7 @@ namespace ForumParser.ViewModels.Windows
         private readonly IViewProvider _viewProvider;
 
         private AsyncObservableCollection<PollQuestionChartViewModel> _questions;
-        private AsyncObservableCollection<ChartTemplateViewModel> _editorTemplates = new AsyncObservableCollection<ChartTemplateViewModel>();
+        private AsyncObservableCollection<EditableChartTemplateViewModel> _editorTemplates = new AsyncObservableCollection<EditableChartTemplateViewModel>();
         private AsyncObservableCollection<QuestionChartMapping> _questionTemplateConnections = new AsyncObservableCollection<QuestionChartMapping>();
 
         #endregion
@@ -38,7 +38,7 @@ namespace ForumParser.ViewModels.Windows
 
         #region Properties
 
-        public AsyncObservableCollection<ChartTemplateViewModel> EditorTemplates
+        public AsyncObservableCollection<EditableChartTemplateViewModel> EditorTemplates
         {
             get { return _editorTemplates; }
             private set { SetValue( ref _editorTemplates, value ); }
@@ -70,7 +70,7 @@ namespace ForumParser.ViewModels.Windows
         public ICommand RemoveQuestionFromTemplateCommand { get; }
         public ICommand SetEqualSizeCommand { get; }
 
-        private void AddQuestionToTemplateCommandHandler( Tuple<ChartTemplateViewModel, PollQuestion> param )
+        private void AddQuestionToTemplateCommandHandler( Tuple<EditableChartTemplateViewModel, PollQuestion> param )
         {
             var targetChart = param.Item1;
             var question = param.Item2;
@@ -88,7 +88,7 @@ namespace ForumParser.ViewModels.Windows
             if ( question == null )
                 throw new ArgumentNullException( nameof( question ) );
 
-            var newChartViewModel = new ChartTemplateViewModel( question.Answers.Count );
+            var newChartViewModel = new EditableChartTemplateViewModel( question.Answers.Count );
             EditorTemplates.Add( newChartViewModel );
 
             AddQuestionToTemplate( question, newChartViewModel );
@@ -117,7 +117,7 @@ namespace ForumParser.ViewModels.Windows
         {
             _viewProvider = viewProvider;
             CreateNewChartCommand = new DelegateCommand<PollQuestion>( CreateNewChartCommandHandler );
-            AddQuestionToTemplateCommand = new DelegateCommand<Tuple<ChartTemplateViewModel, PollQuestion>>( AddQuestionToTemplateCommandHandler );
+            AddQuestionToTemplateCommand = new DelegateCommand<Tuple<EditableChartTemplateViewModel, PollQuestion>>( AddQuestionToTemplateCommandHandler );
             RemoveQuestionFromTemplateCommand = new DelegateCommand<PollQuestion>( RemoveQuestionFromTemplateCommandHandler );
             SetEqualSizeCommand = new DelegateCommand( SetEqualSizeCommandHandler );
         }
@@ -153,7 +153,7 @@ namespace ForumParser.ViewModels.Windows
                 {
                     //  Add template view model
                     var matchingQuestions = matches.Select( match => new KeyValuePair<TemplateQuestion, PollQuestion>( match.TemplateQuestion, match.PollQuestionViewModel.Question ) );
-                    var templateViewModel = new ChartTemplateViewModel( template.Copy(), matchingQuestions );
+                    var templateViewModel = new EditableChartTemplateViewModel( template.Copy(), matchingQuestions );
                     EditorTemplates.Add( templateViewModel );
 
                     //  Add questions-template connections 
@@ -169,7 +169,7 @@ namespace ForumParser.ViewModels.Windows
         ///     Opens editor for a single chart template represented by the <paramref name="templateViewModel"/>.
         /// </summary>
         /// <param name="templateViewModel">The view model representing a chart template.</param>
-        public void EditChartTemplate( ChartTemplateViewModel templateViewModel )
+        public void EditChartTemplate( EditableChartTemplateViewModel templateViewModel )
         {
             _viewProvider.Show<TemplatePropertiesEditorViewModel>( this, propertiesViewModel => propertiesViewModel.Template = templateViewModel );
         }
@@ -179,7 +179,7 @@ namespace ForumParser.ViewModels.Windows
 
         #region Non-public methods
 
-        private void AddQuestionToTemplate( PollQuestion question, ChartTemplateViewModel targetTemplate )
+        private void AddQuestionToTemplate( PollQuestion question, EditableChartTemplateViewModel targetTemplate )
         {
             var questionViewModel = Questions.FirstOrDefault( viewModel => viewModel.Question == question );
             if ( questionViewModel == null )
@@ -273,7 +273,7 @@ namespace ForumParser.ViewModels.Windows
         #region Auto-properties
 
         public PollQuestionChartViewModel Question { get; }
-        public ChartTemplateViewModel Template { get; }
+        public EditableChartTemplateViewModel Template { get; }
 
         #endregion
 
@@ -283,7 +283,7 @@ namespace ForumParser.ViewModels.Windows
         /// <summary>
         ///     Initializes a new instance of the <see cref="T:System.Object" /> class.
         /// </summary>
-        public QuestionChartMapping( PollQuestionChartViewModel question, ChartTemplateViewModel template )
+        public QuestionChartMapping( PollQuestionChartViewModel question, EditableChartTemplateViewModel template )
         {
             Question = question;
             Template = template;

@@ -137,7 +137,8 @@
     <Compile Include="Sources\Models\ParserRules.cs" />
     <Compile Include="Sources\Services\ISingletonService.cs" />
     <Compile Include="Sources\Services\SettingsManager.cs" />
-    <Compile Include="Sources\ViewModels\Controls\ChartTemplatePreviewViewModel.cs" />
+    <Compile Include="Sources\ViewModels\Controls\ChartTemplateViewModel.cs" />
+    <Compile Include="Sources\ViewModels\Controls\PreviewChartTemplateViewModel.cs" />
     <Compile Include="Sources\ViewModels\Controls\PollQuestionChartViewModel.cs" />
     <Compile Include="Sources\Utils\HtmlFormatter.cs" />
     <Compile Include="Sources\Services\CefHandlers\CefLoadHandler.cs" />
@@ -168,7 +169,7 @@
     <Compile Include="Sources\ViewModels\Windows\MainWindowViewModel.cs" />
     <Compile Include="Sources\Services\CookieService.cs" />
     <Compile Include="Sources\ViewModels\UserViewModel.cs" />
-    <Compile Include="Sources\ViewModels\Controls\ChartTemplateViewModel.cs" />
+    <Compile Include="Sources\ViewModels\Controls\EditableChartTemplateViewModel.cs" />
     <Compile Include="Sources\ViewModels\Windows\TemplateEditorViewModel.cs" />
     <Compile Include="Sources\ViewModels\WpfLogger.cs" />
     <Compile Include="Sources\Views\CefHandlers\DialogHandler.cs" />
