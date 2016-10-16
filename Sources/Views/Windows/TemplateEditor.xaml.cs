@@ -296,5 +296,24 @@ namespace ForumParser.Views.Windows
         }
 
         #endregion
+
+
+        private void Ok_Click( object sender, RoutedEventArgs e )
+        {
+            if ( ViewModel?.ConfirmTemplatesEdit() == true )
+            {
+                DialogResult = true;
+                Close();
+            }
+        }
+
+        private void Cancel_Click( object sender, RoutedEventArgs e )
+        {
+            if (ViewModel?.CancelTemplatesEdit() == true)
+            {
+                DialogResult = false;
+                Close();
+            }
+        }
     }
 }

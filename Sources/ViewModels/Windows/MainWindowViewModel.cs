@@ -14,6 +14,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using CommonLib.Extensions;
 using CommonLib.Logging;
+using ForumParser.Collections;
 using ForumParser.Exceptions;
 using ForumParser.Models;
 using ForumParser.Services;
@@ -82,7 +83,7 @@ namespace ForumParser.ViewModels.Windows
         private int _usersWithVoteAndFeedbackCount;
         private int _usersWithVoteOnlyCount;
         private int _votedUsersCount;
-        private ICollection<ChartTemplate> _templates = new List<ChartTemplate>();
+        private AsyncObservableCollection<ChartTemplatePreviewViewModel> _previewTemplates = new AsyncObservableCollection<ChartTemplatePreviewViewModel>();
 
         #endregion
 
@@ -143,10 +144,10 @@ namespace ForumParser.ViewModels.Windows
             }
         }
 
-        public ICollection<ChartTemplate> Templates
+        public AsyncObservableCollection<ChartTemplatePreviewViewModel> PreviewTemplates
         {
-            get { return _templates; }
-            set { SetValue( ref _templates, value ); }
+            get { return _previewTemplates; }
+            set { SetValue( ref _previewTemplates, value ); }
         }
 
         /// <summary>
@@ -363,9 +364,63 @@ namespace ForumParser.ViewModels.Windows
         {
             ExecuteAndCatchExceptions( () =>
             {
-                var dialogResult = _viewProvider.Show<TemplateEditorViewModel>( this, viewModel => viewModel.LoadEditor( Templates, ForumTopic.Poll.Questions ) );
-                Templates = dialogResult.ViewModel.Templates.Select( tvm => tvm.Template ).ToList();
+                var dialogResult = _viewProvider.Show<TemplateEditorViewModel>( this, viewModel =>
+                {
+                    var templates = PreviewTemplates.Select( model => model.Template ).ToList();
+                    viewModel.LoadEditor( templates, ForumTopic.Poll.Questions );
+                } );
+                if ( dialogResult.Result == true )
+                {
+                    LoadTemplatesPreview( dialogResult.ViewModel.EditorTemplates.Select( editorTemplate => editorTemplate.Template ).ToList() );
+                }
             } );
+        }
+
+        private void LoadTemplatesPreview( ICollection<ChartTemplate> templates )
+        {
+            // Setup questions view models
+            PreviewTemplates.Clear();
+
+            var questionsMap = ForumTopic.Poll.Questions.ToDictionary( question => question.Text, StringComparer.OrdinalIgnoreCase );
+
+            foreach (var template in templates)
+            {
+                //  Find questions matching the template
+                var matches = template.Questions
+                                      .Select(question => new { TemplateQuestion = question, PollQuestion = FindMatchingPollQuestion(question, questionsMap) })
+                                      .Where(pair => pair.PollQuestion != null)
+                                      .ToList();
+
+                if (matches.Any())
+                {
+                    //  Add template view model
+                    var matchingQuestions = matches.Select(match => new KeyValuePair<TemplateQuestion, PollQuestion>(match.TemplateQuestion, match.PollQuestion));
+                    var templateViewModel = new ChartTemplatePreviewViewModel( template, matchingQuestions );
+                    PreviewTemplates.Add( templateViewModel );
+                }
+            }
+        }
+
+
+        private static PollQuestion FindMatchingPollQuestion( TemplateQuestion templateQuestion, Dictionary<string, PollQuestion> questionsMap )
+        {
+            var pollQuestion = questionsMap.GetOrDefault( templateQuestion.QuestionText );
+
+            //  Determine cases when match is unsuccessful
+            if ( pollQuestion == null )
+                return null;
+
+            if ( pollQuestion.Answers.Count != templateQuestion.Answers.Count )
+                return null;
+
+            if ( !pollQuestion.Answers
+                              .Zip( templateQuestion.Answers,
+                                    ( pollAnswer, templateAnswerText ) => pollAnswer.Text.Equals( templateAnswerText, StringComparison.OrdinalIgnoreCase ) )
+                              .All( match => match ) )
+                return null;
+
+            //  The matching poll question has been found
+            return pollQuestion;
         }
 
         /// <summary>
@@ -503,6 +558,9 @@ namespace ForumParser.ViewModels.Windows
             } );
         }
 
+        /// <summary>
+        ///     Saves intermediate result .
+        /// </summary>
         private void SaveIntermediateResultCommandHandler()
         {
             ExecuteAndCatchExceptions( () =>

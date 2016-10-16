@@ -131,14 +131,18 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Collections\AsyncObservableCollection.cs" />
+    <Compile Include="Sources\Extensions\ChartTemplateExtensions.cs" />
+    <Compile Include="Sources\Extensions\ObjectExtensions.cs" />
     <Compile Include="Sources\Models\ChartTemplate.cs" />
     <Compile Include="Sources\Models\ParserRules.cs" />
     <Compile Include="Sources\Services\ISingletonService.cs" />
     <Compile Include="Sources\Services\SettingsManager.cs" />
+    <Compile Include="Sources\ViewModels\Controls\ChartTemplatePreviewViewModel.cs" />
     <Compile Include="Sources\ViewModels\Controls\PollQuestionChartViewModel.cs" />
     <Compile Include="Sources\Utils\HtmlFormatter.cs" />
     <Compile Include="Sources\Services\CefHandlers\CefLoadHandler.cs" />
     <Compile Include="Sources\Services\CefHandlers\CefRequestHandler.cs" />
+    <Compile Include="Sources\ViewModels\Controls\QuestionSeriesViewModel.cs" />
     <Compile Include="Sources\ViewModels\Windows\StringInputDialogViewModel.cs" />
     <Compile Include="Sources\ViewModels\Windows\TemplatePropertiesEditorViewModel.cs" />
     <Compile Include="Sources\Views\Behaviors\AutoScroller.cs" />

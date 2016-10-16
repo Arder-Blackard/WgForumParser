@@ -166,7 +166,8 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="640" />
                         </Grid.ColumnDefinitions>
-                        <Grid Grid.Column="0" IsEnabled="{Binding ForumTopic, Converter={StaticResource ForumTopicDependentEnabled}, ConverterParameter={x:Null}}">
+                        <Grid Grid.Column="0"
+                              IsEnabled="{Binding ForumTopic, Converter={StaticResource ForumTopicDependentEnabled}, ConverterParameter={x:Null}}">
                             <Grid.Resources>
                                 <Style TargetType="Button">
                                     <Setter Property="Margin" Value="3" />
@@ -220,7 +221,8 @@
                                         <DataGridTextColumn.HeaderTemplate>
                                             <DataTemplate>
                                                 <TextBlock HorizontalAlignment="Stretch">
-                                                    <Run Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.AllUsersCount, StringFormat=Пользователи ({0})}"></Run>
+                                                    <Run
+                                                        Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.AllUsersCount, StringFormat=Пользователи ({0})}" />
                                                 </TextBlock>
                                             </DataTemplate>
                                         </DataGridTextColumn.HeaderTemplate>
@@ -258,7 +260,8 @@
                                         Command="{Binding CopyUsersWithMarksCommand}"
                                         CommandParameter="{Binding AllUsers}">
                                     <Button.Content>
-                                        <Image Source="/Resources/icons/copy16.png" Stretch="None" SnapsToDevicePixels="True" />
+                                        <Image Source="/Resources/icons/copy16.png" Stretch="None"
+                                               SnapsToDevicePixels="True" />
                                     </Button.Content>
                                 </Button>
                                 <Button Height="24" Width="24" Margin="3,0"
@@ -283,7 +286,8 @@
                                         <DataGridTextColumn.HeaderTemplate>
                                             <DataTemplate>
                                                 <TextBlock HorizontalAlignment="Stretch">
-                                                    <Run Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.VotedUsersCount, StringFormat=Все проголосовавшие ({0})}"></Run>
+                                                    <Run
+                                                        Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.VotedUsersCount, StringFormat=Все проголосовавшие ({0})}" />
                                                 </TextBlock>
                                             </DataTemplate>
                                         </DataGridTextColumn.HeaderTemplate>
@@ -308,7 +312,8 @@
                                         <DataGridTextColumn.HeaderTemplate>
                                             <DataTemplate>
                                                 <TextBlock HorizontalAlignment="Stretch">
-                                                    <Run Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.UsersWithVoteAndFeedbackCount, StringFormat=Голос + фидбек ({0})}"></Run>
+                                                    <Run
+                                                        Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.UsersWithVoteAndFeedbackCount, StringFormat=Голос + фидбек ({0})}" />
                                                 </TextBlock>
                                             </DataTemplate>
                                         </DataGridTextColumn.HeaderTemplate>
@@ -333,7 +338,8 @@
                                         <DataGridTextColumn.HeaderTemplate>
                                             <DataTemplate>
                                                 <TextBlock HorizontalAlignment="Stretch">
-                                                    <Run Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.UsersWithVoteOnlyCount, StringFormat=Только голос ({0})}"></Run>
+                                                    <Run
+                                                        Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.UsersWithVoteOnlyCount, StringFormat=Только голос ({0})}" />
                                                 </TextBlock>
                                             </DataTemplate>
                                         </DataGridTextColumn.HeaderTemplate>
@@ -358,7 +364,8 @@
                                         <DataGridTextColumn.HeaderTemplate>
                                             <DataTemplate>
                                                 <TextBlock HorizontalAlignment="Stretch">
-                                                    <Run Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.UsersWithFeedbackOnlyCount, StringFormat=Фидбек без голоса ({0})}"></Run>
+                                                    <Run
+                                                        Text="{Binding RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}, Mode=OneWay, Path=DataContext.UsersWithFeedbackOnlyCount, StringFormat=Фидбек без голоса ({0})}" />
                                                 </TextBlock>
                                             </DataTemplate>
                                         </DataGridTextColumn.HeaderTemplate>
@@ -377,9 +384,10 @@
                             </StackPanel>
 
                         </Grid>
-                        <GridSplitter Grid.Column="1" ShowsPreview="False" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Width="6" VerticalAlignment="Stretch" />
+                        <GridSplitter Grid.Column="1" ShowsPreview="False" ResizeDirection="Columns"
+                                      ResizeBehavior="PreviousAndNext" Width="6" VerticalAlignment="Stretch" />
                         <GroupBox Grid.Column="2" Header="Сообщения пользователя">
-                            <controls:CefWebBrowser Html="{Binding SelectedUser.Message}"></controls:CefWebBrowser>
+                            <controls:CefWebBrowser Html="{Binding SelectedUser.Message}" />
                         </GroupBox>
                     </Grid>
                 </TabItem>
@@ -407,6 +415,32 @@
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
                                 <TextBlock Text="Результат применения шаблона" />
+                                <Border Grid.Row="1" BorderBrush="Black" BorderThickness="1">
+                                    <ScrollViewer Name="ChartsScrollViewer"
+                                                  VerticalContentAlignment="Top"
+                                                  VerticalScrollBarVisibility="Disabled"
+                                                  CanContentScroll="False">
+                                        <ItemsControl x:Name="ChartsList"
+                                                      ItemsSource="{Binding PreviewTemplates}"
+                                                      VerticalContentAlignment="Top">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <controls:ChartTemplateView
+                                                        HorizontalAlignment="Left"
+                                                        BorderThickness="1"
+                                                        Margin="4"
+                                                        AllowDrop="True" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </Border>
+
                             </Grid>
                         </Grid>
                     </Border>
