@@ -391,9 +391,9 @@
                         </GroupBox>
                     </Grid>
                 </TabItem>
-                <TabItem Header="Графики голосования (не реализовано)">
+                <TabItem Header="Графики голосования">
                     <Border Padding="8">
-                        <Grid>
+                        <Grid IsEnabled="{Binding ForumTopic, Converter={StaticResource ForumTopicDependentEnabled}, ConverterParameter={x:Null}}">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -401,12 +401,11 @@
                             </Grid.RowDefinitions>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock VerticalAlignment="Center" Margin="0,0,5,0">Шаблон:</TextBlock>
-                                <Button Padding="6,2" Margin="3" Content="Загрузить..." />
-                                <Button Padding="6,2" Margin="3" Content="Сохранить..." />
-                                <Button Padding="6,2" Margin="3" Content="Редактировать..."
-                                        Command="{Binding EditTemplateCommand}" />
+                                <Button Padding="6,2" Margin="3" Content="Загрузить..." Command="{Binding LoadTemplatesCommand}"/>
+                                <Button Padding="6,2" Margin="3" Content="Сохранить..." Command="{Binding SaveTemplatesCommand}"/>
+                                <Button Padding="6,2" Margin="3" Content="Редактировать..." Command="{Binding EditTemplatesCommand}" />
                                 <TextBlock VerticalAlignment="Center" Margin="5,0,5,0">Графики:</TextBlock>
-                                <Button Padding="6,2" Margin="3" Content="Сохранить..." />
+                                <Button Padding="6,2" Margin="3" Content="Сохранить..." Click="SaveCharts_Click"/>
                             </StackPanel>
                             <TextBlock Grid.Row="1">{Template state}</TextBlock>
                             <Grid Grid.Row="2" Margin="0,12,0,0">
@@ -418,7 +417,8 @@
                                 <Border Grid.Row="1" BorderBrush="Black" BorderThickness="1">
                                     <ScrollViewer Name="ChartsScrollViewer"
                                                   VerticalContentAlignment="Top"
-                                                  VerticalScrollBarVisibility="Disabled"
+                                                  VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Auto"
                                                   CanContentScroll="False">
                                         <ItemsControl x:Name="ChartsList"
                                                       ItemsSource="{Binding PreviewTemplates}"

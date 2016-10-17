@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Drawing;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using CommonLib.Extensions;
 using CommonLib.Logging;
 using ForumParser.Collections;
@@ -19,11 +21,12 @@ using ForumParser.Exceptions;
 using ForumParser.Models;
 using ForumParser.Services;
 using ForumParser.ViewModels.Controls;
-using Newtonsoft.Json;
+using ForumParser.Views.Controls;
 using WpfCommon.Commands;
 using WpfCommon.Services;
 using WpfCommon.ViewModels.Base;
 using WpfCommon.ViewModels.Dialogs;
+using Size = System.Windows.Size;
 
 namespace ForumParser.ViewModels.Windows
 {
@@ -51,12 +54,6 @@ namespace ForumParser.ViewModels.Windows
 
         private static readonly Regex FixInvalidPathCharactersRegex = new Regex( @"[\\/\*\?\:""<>]" );
 
-        private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings
-        {
-            PreserveReferencesHandling = PreserveReferencesHandling.All,
-            TypeNameHandling = TypeNameHandling.All
-        };
-
         #endregion
 
 
@@ -65,6 +62,7 @@ namespace ForumParser.ViewModels.Windows
         //  Services
         private readonly ForumTopicParser _forumParser;
         private readonly IViewProvider _viewProvider;
+        private readonly SaveLoadManager _saveLoadManager;
 
         private readonly Stack<KeyValuePair<int, User>> _deletedUsersStack = new Stack<KeyValuePair<int, User>>();
 
@@ -116,6 +114,8 @@ namespace ForumParser.ViewModels.Windows
         public string FinalResultsDirectory { get; set; }
 
         public string ForumTopicFile { get; set; }
+
+        public string ChartTemplatesFile { get; set; }
 
         #endregion
 
@@ -299,12 +299,15 @@ namespace ForumParser.ViewModels.Windows
         public ICommand CopyUsersWithoutMarksCommand { get; }
         public ICommand DeleteSelectedUserCommand { get; }
 
-        public ICommand EditTemplateCommand { get; }
+        public ICommand EditTemplatesCommand { get; }
 
         public ICommand LoadForumTopicCommand { get; }
         public ICommand LoadIntermediateResultCommand { get; }
+        public ICommand LoadTemplatesCommand { get; }
+        public ICommand SaveChartsCommand { get; }
         public ICommand SaveFinalResultCommand { get; }
         public ICommand SaveIntermediateResultCommand { get; }
+        public ICommand SaveTemplatesCommand { get; }
         public ICommand SetAllUsersMarksCommand { get; }
 
         public ICommand UndoDeleteUserCommand { get; }
@@ -360,7 +363,7 @@ namespace ForumParser.ViewModels.Windows
         /// <summary>
         ///     Displays charts template editor.
         /// </summary>
-        private void EditTemplateCommandHandler()
+        private void EditTemplatesCommandHandler()
         {
             ExecuteAndCatchExceptions( () =>
             {
@@ -370,57 +373,8 @@ namespace ForumParser.ViewModels.Windows
                     viewModel.LoadEditor( templates, ForumTopic.Poll.Questions );
                 } );
                 if ( dialogResult.Result == true )
-                {
                     LoadTemplatesPreview( dialogResult.ViewModel.EditorTemplates.Select( editorTemplate => editorTemplate.Template ).ToList() );
-                }
             } );
-        }
-
-        private void LoadTemplatesPreview( ICollection<ChartTemplate> templates )
-        {
-            // Setup questions view models
-            PreviewTemplates.Clear();
-
-            var questionsMap = ForumTopic.Poll.Questions.ToDictionary( question => question.Text, StringComparer.OrdinalIgnoreCase );
-
-            foreach (var template in templates)
-            {
-                //  Find questions matching the template
-                var matches = template.Questions
-                                      .Select(question => new { TemplateQuestion = question, PollQuestion = FindMatchingPollQuestion(question, questionsMap) })
-                                      .Where(pair => pair.PollQuestion != null)
-                                      .ToList();
-
-                if (matches.Any())
-                {
-                    //  Add template view model
-                    var matchingQuestions = matches.Select(match => new KeyValuePair<TemplateQuestion, PollQuestion>(match.TemplateQuestion, match.PollQuestion));
-                    var templateViewModel = new PreviewChartTemplateViewModel( template, matchingQuestions );
-                    PreviewTemplates.Add( templateViewModel );
-                }
-            }
-        }
-
-
-        private static PollQuestion FindMatchingPollQuestion( TemplateQuestion templateQuestion, Dictionary<string, PollQuestion> questionsMap )
-        {
-            var pollQuestion = questionsMap.GetOrDefault( templateQuestion.QuestionText );
-
-            //  Determine cases when match is unsuccessful
-            if ( pollQuestion == null )
-                return null;
-
-            if ( pollQuestion.Answers.Count != templateQuestion.Answers.Count )
-                return null;
-
-            if ( !pollQuestion.Answers
-                              .Zip( templateQuestion.Answers,
-                                    ( pollAnswer, templateAnswerText ) => pollAnswer.Text.Equals( templateAnswerText, StringComparison.OrdinalIgnoreCase ) )
-                              .All( match => match ) )
-                return null;
-
-            //  The matching poll question has been found
-            return pollQuestion;
         }
 
         /// <summary>
@@ -438,6 +392,7 @@ namespace ForumParser.ViewModels.Windows
             }
 
             //  Start from the first page
+            //  TODO: Move to ForumParser class
             var pageNumberIndex = topicUrl.IndexOf( "page__st__", StringComparison.OrdinalIgnoreCase );
             if ( pageNumberIndex == -1 )
                 pageNumberIndex = topicUrl.IndexOf( "page__mode__show__st__", StringComparison.OrdinalIgnoreCase );
@@ -445,7 +400,7 @@ namespace ForumParser.ViewModels.Windows
             if ( pageNumberIndex > -1 )
             {
                 topicUrl = topicUrl.Substring( 0, pageNumberIndex );
-                UiLogger.Warning( $"URL темы указывает не на первую страницу. Разбор темы будет начат со страницы {topicUrl}" );
+                UiLogger.Warning( $"URL темы указывает не на первую страницу. Разбор темы будет начат со страницы {Uri.UnescapeDataString( topicUrl )}" );
             }
 
             if ( SessionId == null )
@@ -492,22 +447,40 @@ namespace ForumParser.ViewModels.Windows
         {
             ExecuteAndCatchExceptions( () =>
             {
-                var saveFile = _viewProvider.ShowDialog<OpenFileViewModel>( this, viewModel =>
-                {
-                    viewModel.FileName = ForumTopicFile;
-                    viewModel.Filter = "Parser intermediate results|*.wfp";
-                    viewModel.Title = "Укажите путь к файлу";
-                } );
-
-                if ( saveFile.Result != true )
+                var saveFile = _viewProvider.QueryOpenFileName( this, ForumTopicFile, "Parser intermediate results|*.wfp", "Укажите путь к файлу" );
+                if ( saveFile == null )
                     return;
-
-                ForumTopicFile = saveFile.ViewModel.FileName;
 
                 try
                 {
-                    ForumTopic = LoadForumTopicFromFile( ForumTopicFile );
+                    ForumTopicFile = saveFile;
+                    ForumTopic = _saveLoadManager.LoadIntermediateResults( ForumTopicFile );
                     UiLogger.Info( $"Промежуточные результаты загружены из файла '{ForumTopicFile}'" );
+                }
+                catch ( ForumParserException ex )
+                {
+                    _viewProvider.ShowMessageBox( this, ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error );
+                    UiLogger.Error( ex.Message, ex );
+                }
+            } );
+        }
+
+        /// <summary>
+        ///     Displays charts template editor.
+        /// </summary>
+        private void LoadTemplatesCommandHandler()
+        {
+            ExecuteAndCatchExceptions( () =>
+            {
+                var saveFile = _viewProvider.QueryOpenFileName( this, ChartTemplatesFile, "Parser chart templates|*.wct", "Укажите путь к файлу" );
+                if ( saveFile == null )
+                    return;
+
+                try
+                {
+                    ChartTemplatesFile = saveFile;
+                    LoadTemplatesPreview( _saveLoadManager.LoadChartTemplates( ChartTemplatesFile ) );
+                    UiLogger.Info( $"Шаблоны графиков загружены из файла '{ChartTemplatesFile}'" );
                 }
                 catch ( ForumParserException ex )
                 {
@@ -565,29 +538,46 @@ namespace ForumParser.ViewModels.Windows
         {
             ExecuteAndCatchExceptions( () =>
             {
-                var saveFile = _viewProvider.ShowDialog<SaveFileViewModel>( this, viewModel =>
-                {
-                    viewModel.FileName = ForumTopicFile;
-                    viewModel.Filter = "Parser intermediate results|*.wfp";
-                    viewModel.Title = "Укажите путь к файлу";
-                    viewModel.CheckFileExists = false;
-                } );
-
-                if ( saveFile.Result != true )
+                var saveFile = _viewProvider.QuerySaveFileName( this, ForumTopicFile, "Parser intermediate results|*.wfp", "Укажите путь к файлу" );
+                if ( saveFile == null )
                     return;
 
-                ForumTopicFile = saveFile.ViewModel.FileName;
-                var json = JsonConvert.SerializeObject( ForumTopic, Formatting.Indented, JsonSerializerSettings );
+                try
+                {
+                    ForumTopicFile = saveFile;
+                    _saveLoadManager.SaveIntermediateResults( ForumTopic, ForumTopicFile );
+                    UiLogger.Info( $"Промежуточные результаты сохранены в файл '{ForumTopicFile}'" );
+                }
+                catch ( ForumParserException ex )
+                {
+                    _viewProvider.ShowMessageBox( this, ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error );
+                    UiLogger.Error( ex.Message, ex );
+                }
+            } );
+        }
 
-                if ( File.Exists( ForumTopicFile ) )
-                    File.Delete( ForumTopicFile );
+        /// <summary>
+        ///     Displays charts template editor.
+        /// </summary>
+        private void SaveTemplatesCommandHandler()
+        {
+            ExecuteAndCatchExceptions( () =>
+            {
+                var saveFile = _viewProvider.QuerySaveFileName( this, ChartTemplatesFile, "Parser chart templates|*.wct", "Укажите путь к файлу" );
+                if ( saveFile == null )
+                    return;
 
-                using ( var file = ZipFile.Open( ForumTopicFile, ZipArchiveMode.Create ) )
-                using ( var stream = file.CreateEntry( "topic.json" ).Open() )
-                using ( var writer = new StreamWriter( stream ) )
-                    writer.Write( json );
-
-                UiLogger.Info( $"Промежуточные результаты сохранены в файл '{ForumTopicFile}'" );
+                try
+                {
+                    ChartTemplatesFile = saveFile;
+                    _saveLoadManager.SaveChartTemplates( PreviewTemplates.Select( templateVm => templateVm.Template ), ChartTemplatesFile );
+                    UiLogger.Info( $"Шаблоны графиков сохранены в файл '{ChartTemplatesFile}'" );
+                }
+                catch ( ForumParserException ex )
+                {
+                    _viewProvider.ShowMessageBox( this, ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error );
+                    UiLogger.Error( ex.Message, ex );
+                }
             } );
         }
 
@@ -661,16 +651,20 @@ namespace ForumParser.ViewModels.Windows
 
         #region Initialization
 
-        public MainWindowViewModel( IViewProvider viewProvider, ForumTopicParser forumParser, ILogger uiLogger ) : base( uiLogger )
+        public MainWindowViewModel( IViewProvider viewProvider, ForumTopicParser forumParser, ILogger uiLogger, SaveLoadManager saveLoadManager ) : base( uiLogger )
         {
             UiLogger = uiLogger;
+            _saveLoadManager = saveLoadManager;
             _viewProvider = viewProvider;
             _forumParser = forumParser;
             LoadForumTopicCommand = new AsyncDelegateCommand( LoadForumTopicCommandHandler );
             SaveIntermediateResultCommand = new DelegateCommand( SaveIntermediateResultCommandHandler );
             LoadIntermediateResultCommand = new DelegateCommand( LoadIntermediateResultCommandHandler );
             SetAllUsersMarksCommand = new DelegateCommand<int>( SetAllUsersMarksCommandHandler );
-            EditTemplateCommand = new DelegateCommand( EditTemplateCommandHandler );
+            EditTemplatesCommand = new DelegateCommand( EditTemplatesCommandHandler );
+            SaveTemplatesCommand = new DelegateCommand( SaveTemplatesCommandHandler );
+            SaveChartsCommand = new DelegateCommand( SaveChartsCommandHandler );
+            LoadTemplatesCommand = new DelegateCommand( LoadTemplatesCommandHandler );
             CopyUsersWithMarksCommand = new DelegateCommand<IEnumerable>( CopyUsersWithMarksCommandHandler );
             CopyUsersWithoutMarksCommand = new DelegateCommand<IEnumerable>( CopyUsersWithoutMarksCommandHandler );
             DeleteSelectedUserCommand = new DelegateCommand( DeleteSelectedUserCommandHandler );
@@ -678,51 +672,84 @@ namespace ForumParser.ViewModels.Windows
             UndoDeleteUserCommand = new DelegateCommand( UndoDeleteUserCommandHandler );
         }
 
+        public string GetChartsSaveDirectory()
+        {
+            return _viewProvider.QueryDirectoryName( this, ChartsDirectory );
+        }
+
+        public string ChartsDirectory { get; set; }
+
+        private void SaveChartsCommandHandler()
+        {
+//            foreach ( var templateViewModel in PreviewTemplates )
+//            {
+//                var view = new ChartTemplateView();
+//                view.DataContext = templateViewModel;
+////                view.InitializeComponent();
+//                view.ApplyTemplate();
+//                view.UpdateLayout();
+//                view.Measure( new Size(templateViewModel.Width, templateViewModel.Height) );
+//                view.Arrange( new Rect( 0, 0, templateViewModel.Width, templateViewModel.Height) );
+//                var rtb = new RenderTargetBitmap((int)view.ActualWidth, (int)view.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+//                rtb.Render(view);
+//                var png = new PngBitmapEncoder { Frames = { BitmapFrame.Create( rtb ) } };
+//
+//                using ( var stream = File.OpenWrite( "g:\\img" + DateTime.Now.Ticks + ".png" ) )
+//                {
+//                    png.Save( stream );
+//                }
+//            }
+        }
+
         #endregion
 
 
         #region Non-public methods
 
-        private ForumTopic LoadForumTopicFromFile( string fileName )
+        private void LoadTemplatesPreview( ICollection<ChartTemplate> templates )
         {
-            try
-            {
-                using ( var zipArchive = ZipFile.Open( fileName, ZipArchiveMode.Read ) )
-                using ( var stream = zipArchive.GetEntry( "topic.json" )?.Open() )
-                {
-                    if ( stream == null )
-                        throw new IOException( "Неверный формат сохраненных данных." );
+            // Setup questions view models
+            PreviewTemplates.Clear();
 
-                    using ( var reader = new StreamReader( stream ) )
-                    {
-                        var json = reader.ReadToEnd();
-                        try
-                        {
-                            return JsonConvert.DeserializeObject<ForumTopic>( json, JsonSerializerSettings );
-                        }
-                        catch ( Exception ex )
-                        {
-                            throw new InvalidDataException( "Ошибка при чтении 'topic.json'.", ex );
-                        }
-                    }
+            var questionsMap = ForumTopic.Poll.Questions.ToDictionary( question => question.Text, StringComparer.OrdinalIgnoreCase );
+
+            foreach ( var template in templates )
+            {
+                //  Find questions matching the template
+                var matches = template.Questions
+                                      .Select( question => new { TemplateQuestion = question, PollQuestion = FindMatchingPollQuestion( question, questionsMap ) } )
+                                      .Where( pair => pair.PollQuestion != null )
+                                      .ToList();
+
+                if ( matches.Any() )
+                {
+                    //  Add template view model
+                    var matchingQuestions = matches.Select( match => new KeyValuePair<TemplateQuestion, PollQuestion>( match.TemplateQuestion, match.PollQuestion ) );
+                    var templateViewModel = new PreviewChartTemplateViewModel( template, matchingQuestions );
+                    PreviewTemplates.Add( templateViewModel );
                 }
             }
-            catch ( FileNotFoundException ex )
-            {
-                throw new ForumParserException( $"Файл не найден.", ex );
-            }
-            catch ( IOException ex )
-            {
-                throw new ForumParserException( $"Ошибка при загрузке файла.", ex );
-            }
-            catch ( InvalidDataException ex )
-            {
-                throw new ForumParserException( $"Неверный формат данных.", ex );
-            }
-            catch ( Exception ex )
-            {
-                throw new ForumParserException( $"Ошибка при загрузке: ", ex );
-            }
+        }
+
+        private static PollQuestion FindMatchingPollQuestion( TemplateQuestion templateQuestion, Dictionary<string, PollQuestion> questionsMap )
+        {
+            var pollQuestion = questionsMap.GetOrDefault( templateQuestion.QuestionText );
+
+            //  Determine cases when match is unsuccessful
+            if ( pollQuestion == null )
+                return null;
+
+            if ( pollQuestion.Answers.Count != templateQuestion.Answers.Count )
+                return null;
+
+            if ( !pollQuestion.Answers
+                              .Zip( templateQuestion.Answers,
+                                    ( pollAnswer, templateAnswerText ) => pollAnswer.Text.Equals( templateAnswerText, StringComparison.OrdinalIgnoreCase ) )
+                              .All( match => match ) )
+                return null;
+
+            //  The matching poll question has been found
+            return pollQuestion;
         }
 
         private void RefreshUsers()

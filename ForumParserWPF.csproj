@@ -103,6 +103,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Windows.Forms" />
@@ -136,6 +137,7 @@
     <Compile Include="Sources\Models\ChartTemplate.cs" />
     <Compile Include="Sources\Models\ParserRules.cs" />
     <Compile Include="Sources\Services\ISingletonService.cs" />
+    <Compile Include="Sources\Services\SaveLoadManager.cs" />
     <Compile Include="Sources\Services\SettingsManager.cs" />
     <Compile Include="Sources\ViewModels\Controls\ChartTemplateViewModel.cs" />
     <Compile Include="Sources\ViewModels\Controls\PreviewChartTemplateViewModel.cs" />
@@ -151,6 +153,7 @@
       <DependentUpon>DataPointsGroupView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Sources\Views\Controls\HotspotContainer.cs" />
+    <Compile Include="Sources\Views\Controls\OutlinedTextBlock.cs" />
     <Compile Include="Sources\Views\Controls\RotatableLabel.cs" />
     <Compile Include="Sources\Views\Converters\ColumnColorConverter.cs" />
     <Compile Include="Sources\Exceptions\ForumParserException.cs" />

@@ -38,7 +38,7 @@ namespace ForumParser.Views.Controls
             if ( _resizing )
             {
                 var desiredSize = _initialDelta + Mouse.GetPosition( this );
-                var templateViewModel = DataContext as EditableChartTemplateViewModel;
+                var templateViewModel = DataContext as ChartTemplateViewModel;
                 if ( templateViewModel != null )
                 {
                     templateViewModel.Width = Math.Max( desiredSize.X, 200 );

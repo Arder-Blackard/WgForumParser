@@ -157,6 +157,8 @@ namespace ForumParser.ViewModels.Controls
         /// </summary>
         public string Text { get; }
 
+        public string Label => $"{Value} ({Value/MaxValue:P1})";
+
         #endregion
 
 

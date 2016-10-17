@@ -53,12 +53,12 @@ namespace ForumParser
             var container = new Container();
             container.RegisterSingleton<IServiceProvider>( container );
 
-            //  View locator
+            //  View provider
             container.RegisterSingleton<IViewProvider, ViewProvider>();
-
 
             //  Common services
             container.RegisterSingleton<ILogger, WpfLogger>();
+
             foreach ( var type in typeof ( App ).Assembly.ExportedTypes.Where( type => !type.IsInterface && typeof ( ISingletonService ).IsAssignableFrom( type ) ).ToList() )
                 container.RegisterSingleton( type, type );
 

@@ -1,10 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Linq;
 using ForumParser.Models;
-using WpfCommon.ViewModels.Base;
 
 namespace ForumParser.ViewModels.Controls
 {
@@ -55,6 +50,8 @@ namespace ForumParser.ViewModels.Controls
 
         public PreviewChartTemplateViewModel( ChartTemplate template, IEnumerable<KeyValuePair<TemplateQuestion, PollQuestion>> questions ) : base(template, questions)
         {
+            _width = template.Width;
+            _height = template.Height;
         }
 
         #endregion

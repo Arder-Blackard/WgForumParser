@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Dom;
-using AngleSharp.Html;
 using AngleSharp.Services.Default;
 using CommonLib.Extensions;
 using CommonLib.Logging;
@@ -112,7 +111,7 @@ namespace ForumParser.Services
                 {
                     _browsingContext = CreateBrowsingContext( topicUrl, sessionId );
                 }
-                catch (Exception ex)
+                catch ( Exception ex )
                 {
                     throw new ForumParserException( "Невозможно подключиться к указанному адресу", ex );
                 }
@@ -178,34 +177,21 @@ namespace ForumParser.Services
 
                 var document = await _browsingContext.OpenAsync( topicUrl );
 
-
-                try
+                forumTopic.Poll = ParsePoll( document );
+                if ( forumTopic.Poll == null )
                 {
-                    using (var stream = File.OpenWrite("r:\\p.txt"))
-                    using ( var writer = new StreamWriter( stream ) )
-                        document.ToHtml( writer, new PrettyMarkupFormatter() );
-                }
-                catch
-                {
-                }
-
-
-                forumTopic.Poll = ParsePoll(document);
-                if (forumTopic.Poll == null)
-                {
-                    var pollResultsLink = FindPollResultsLink(document);
-                    forumTopic.Poll = pollResultsLink != null ? ParsePoll(await _browsingContext.OpenAsync(pollResultsLink)) : new Poll();
+                    var pollResultsLink = FindPollResultsLink( document );
+                    forumTopic.Poll = pollResultsLink != null ? ParsePoll( await _browsingContext.OpenAsync( pollResultsLink ) ) : new Poll();
                 }
 
                 _logger?.Info( "Сбор данных о пользователях..." );
 
                 forumTopic.Users = _usersList;
 
-                if (forumTopic.Users.Count == 0 && forumTopic.Poll.Questions.Count == 0)
-                    _logger?.Info("Не найдены данные, соответствующие формату темы форума");
+                if ( forumTopic.Users.Count == 0 && forumTopic.Poll.Questions.Count == 0 )
+                    _logger?.Info( "Не найдены данные, соответствующие формату темы форума" );
                 else
-                    _logger?.Info("Загрузка данных завершена");
-
+                    _logger?.Info( "Загрузка данных завершена" );
 
                 return forumTopic;
             }
@@ -252,8 +238,8 @@ namespace ForumParser.Services
                     return;
 
                 //  Get and check the name and the group of the user
-                var userGroup = post.QuerySelector("li.group_title span")?.TextContent ?? string.Empty;
-                var userName = post.QuerySelector("span[itemprop=name]")?.TextContent ?? string.Empty;
+                var userGroup = post.QuerySelector( "li.group_title span" )?.TextContent ?? string.Empty;
+                var userName = post.QuerySelector( "span[itemprop=name]" )?.TextContent ?? string.Empty;
 
                 if ( _options.ExcludeAdministrators && _settings.Administrators.Contains( userGroup ) )
                     return;
@@ -273,7 +259,7 @@ namespace ForumParser.Services
                     return;
 
                 //  Create or update the user
-                var user = GetOrInsertUser( userId, () => new User { Id = userId, Name = userName, Group = userGroup, } );
+                var user = GetOrInsertUser( userId, () => new User { Id = userId, Name = userName, Group = userGroup } );
 
                 user.HasFeedback = userHasFeedback;
                 user.HasDeletedFeedback = isFeedbackDeleted;
@@ -314,17 +300,6 @@ namespace ForumParser.Services
                     _logger?.Info( "Загрузка страницы " + Uri.UnescapeDataString( nextUrl ) );
 
                     var document = await _browsingContext.OpenAsync( nextUrl );
-
-                    try
-                    {
-                        using ( var stream = File.OpenWrite( "r:\\t" + nextUrl.Split( '\\', '/' ).Last() + ".txt" ) )
-                        using ( var writer = new StreamWriter( stream ) )
-                            document.ToHtml( writer, new PrettyMarkupFormatter() );
-                    }
-                    catch
-                    {
-                    }
-
                     pages.Add( document );
                     nextUrl = document.QuerySelector( "html>head>link[rel=next]" )?.Attributes["href"].Value;
                 } while ( !string.IsNullOrEmpty( nextUrl ) );

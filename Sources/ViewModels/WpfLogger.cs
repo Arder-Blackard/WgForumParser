@@ -1,7 +1,5 @@
-﻿using System.Collections.ObjectModel;
-using System.Windows;
-using System.Windows.Threading;
-using CommonLib.Logging;
+﻿using CommonLib.Logging;
+using ForumParser.Collections;
 
 namespace ForumParser.ViewModels
 {
@@ -12,7 +10,7 @@ namespace ForumParser.ViewModels
 
         #region Auto-properties
 
-        public ObservableCollection<LogEntryBase> Entries { get; } = new ObservableCollection<LogEntryBase>();
+        public AsyncObservableCollection<LogEntryBase> Entries { get; } = new AsyncObservableCollection<LogEntryBase>();
 
         public LogSeverity LogLevel { get; set; }
 
@@ -24,7 +22,7 @@ namespace ForumParser.ViewModels
         public void Log( LogEntryBase entry )
         {
             _fileLogger.Log( entry );
-            Application.Current?.Dispatcher.Invoke( () => Entries.Add( entry ), DispatcherPriority.Send );
+            Entries.Add( entry );
         }
 
         #endregion
