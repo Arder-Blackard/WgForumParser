@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -12,7 +11,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommonLib.Extensions;
 using CommonLib.Logging;
@@ -21,12 +19,10 @@ using ForumParser.Exceptions;
 using ForumParser.Models;
 using ForumParser.Services;
 using ForumParser.ViewModels.Controls;
-using ForumParser.Views.Controls;
 using WpfCommon.Commands;
 using WpfCommon.Services;
 using WpfCommon.ViewModels.Base;
 using WpfCommon.ViewModels.Dialogs;
-using Size = System.Windows.Size;
 
 namespace ForumParser.ViewModels.Windows
 {
@@ -38,19 +34,19 @@ namespace ForumParser.ViewModels.Windows
         #region Constants
 
         public static readonly DependencyProperty TopicUrlProperty = DependencyProperty.Register(
-            "TopicUrl", typeof ( string ), typeof ( MainWindowViewModel ), new FrameworkPropertyMetadata( default(string) ) );
+            "TopicUrl", typeof (string), typeof (MainWindowViewModel), new FrameworkPropertyMetadata( default(string) ) );
 
         public static readonly DependencyProperty ExcludeAdministratorsProperty = DependencyProperty.Register(
-            "ExcludeAdministrators", typeof ( bool ), typeof ( MainWindowViewModel ), new FrameworkPropertyMetadata( default(bool) ) );
+            "ExcludeAdministrators", typeof (bool), typeof (MainWindowViewModel), new FrameworkPropertyMetadata( default(bool) ) );
 
         public static readonly DependencyProperty ExcludeCoordinatorsProperty = DependencyProperty.Register(
-            "ExcludeCoordinators", typeof ( bool ), typeof ( MainWindowViewModel ), new FrameworkPropertyMetadata( default(bool) ) );
+            "ExcludeCoordinators", typeof (bool), typeof (MainWindowViewModel), new FrameworkPropertyMetadata( default(bool) ) );
 
         public static readonly DependencyProperty ExcludeDeletedMessagesProperty = DependencyProperty.Register(
-            "ExcludeDeletedMessages", typeof ( bool ), typeof ( MainWindowViewModel ), new FrameworkPropertyMetadata( default(bool) ) );
+            "ExcludeDeletedMessages", typeof (bool), typeof (MainWindowViewModel), new FrameworkPropertyMetadata( default(bool) ) );
 
         public static readonly DependencyProperty ParsePollOnlyProperty = DependencyProperty.Register(
-            "ParsePollOnly", typeof ( bool ), typeof ( MainWindowViewModel ), new FrameworkPropertyMetadata( default(bool) ) );
+            "ParsePollOnly", typeof (bool), typeof (MainWindowViewModel), new FrameworkPropertyMetadata( default(bool) ) );
 
         private static readonly Regex FixInvalidPathCharactersRegex = new Regex( @"[\\/\*\?\:""<>]" );
 
@@ -59,29 +55,31 @@ namespace ForumParser.ViewModels.Windows
 
         #region Fields
 
+        private readonly Stack<KeyValuePair<int, User>> _deletedUsersStack = new Stack<KeyValuePair<int, User>>();
+
         //  Services
         private readonly ForumTopicParser _forumParser;
-        private readonly IViewProvider _viewProvider;
         private readonly SaveLoadManager _saveLoadManager;
-
-        private readonly Stack<KeyValuePair<int, User>> _deletedUsersStack = new Stack<KeyValuePair<int, User>>();
+        private readonly TemplateMatcher _templateMatcher;
+        private readonly IViewProvider _viewProvider;
+        private ICollectionView _allUsers;
+        private int _allUsersCount;
 
         //  Data
         private ForumTopic _forumTopic;
-        private string _viewTitle;
-        private UserViewModel _selectedUser;
-        private ObservableCollection<UserViewModel> _users;
-        private ICollectionView _allUsers;
-        private ICollectionView _usersWithFeedbackOnly;
-        private ICollectionView _usersWithVoteAndFeedback;
-        private ICollectionView _usersWithVoteOnly;
-        private ICollectionView _votedUsers;
-        private int _usersWithFeedbackOnlyCount;
-        private int _allUsersCount;
-        private int _usersWithVoteAndFeedbackCount;
-        private int _usersWithVoteOnlyCount;
-        private int _votedUsersCount;
         private AsyncObservableCollection<PreviewChartTemplateViewModel> _previewTemplates = new AsyncObservableCollection<PreviewChartTemplateViewModel>();
+        private UserViewModel _selectedUser;
+        private string _templateState;
+        private ObservableCollection<UserViewModel> _users;
+        private ICollectionView _usersWithFeedbackOnly;
+        private int _usersWithFeedbackOnlyCount;
+        private ICollectionView _usersWithVoteAndFeedback;
+        private int _usersWithVoteAndFeedbackCount;
+        private ICollectionView _usersWithVoteOnly;
+        private int _usersWithVoteOnlyCount;
+        private string _viewTitle;
+        private ICollectionView _votedUsers;
+        private int _votedUsersCount;
 
         #endregion
 
@@ -117,6 +115,8 @@ namespace ForumParser.ViewModels.Windows
 
         public string ChartTemplatesFile { get; set; }
 
+        public string ChartsDirectory { get; set; }
+
         #endregion
 
 
@@ -140,7 +140,10 @@ namespace ForumParser.ViewModels.Windows
             private set
             {
                 if ( SetValue( ref _forumTopic, value ) )
+                {
                     SetUsers( _forumTopic.Users );
+                    LoadTemplatesPreview( PreviewTemplates.Select( t => t.Template ).ToList() );
+                }
             }
         }
 
@@ -289,6 +292,284 @@ namespace ForumParser.ViewModels.Windows
         ///     Window title.
         /// </summary>
         public string ViewTitle => _viewTitle ?? (_viewTitle = $"ForumParser v.{GetType().Assembly.GetName().Version}");
+
+        public string TemplateState
+        {
+            get { return _templateState; }
+            set { SetValue( ref _templateState, value ); }
+        }
+
+        #endregion
+
+
+        #region Events and invocation
+
+        /// <summary>
+        ///     Override this method to process unhandled exceptions thrown from executing task.
+        /// </summary>
+        /// <param name="exception">The exception thrown.</param>
+        protected override void OnTaskFailed( Exception exception )
+        {
+            _viewProvider.ShowMessageBox( this, exception.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error );
+        }
+
+        /// <summary>
+        ///     Called when the associated view has been just created.
+        /// </summary>
+        public void OnViewLoaded()
+        {
+            //  Do nothing
+        }
+
+        /// <summary>
+        ///     Called when the associated view is about to close. Return false to disallow closing window.
+        /// </summary>
+        public bool OnViewClosing()
+        {
+            if ( IsBusy )
+            {
+                var cancelation = _viewProvider.ShowMessageBox( this, "Операция в процессе. Действительно завершить работу?", "Подтверждение выхода",
+                                                                MessageBoxButton.OKCancel, MessageBoxImage.Warning );
+
+                if ( cancelation != true )
+                    return false;
+            }
+
+            CancelTask();
+            return true;
+        }
+
+        #endregion
+
+
+        #region Initialization
+
+        public MainWindowViewModel( IViewProvider viewProvider,
+                                    ForumTopicParser forumParser,
+                                    ILogger uiLogger,
+                                    SaveLoadManager saveLoadManager,
+                                    TemplateMatcher templateMatcher )
+            : base( uiLogger )
+        {
+            UiLogger = uiLogger;
+            _saveLoadManager = saveLoadManager;
+            _templateMatcher = templateMatcher;
+            _viewProvider = viewProvider;
+            _forumParser = forumParser;
+            LoadForumTopicCommand = new AsyncDelegateCommand( LoadForumTopicCommandHandler );
+            SaveIntermediateResultCommand = new DelegateCommand( SaveIntermediateResultCommandHandler );
+            LoadIntermediateResultCommand = new DelegateCommand( LoadIntermediateResultCommandHandler );
+            SetAllUsersMarksCommand = new DelegateCommand<int>( SetAllUsersMarksCommandHandler );
+            EditTemplatesCommand = new DelegateCommand( EditTemplatesCommandHandler );
+            SaveTemplatesCommand = new DelegateCommand( SaveTemplatesCommandHandler );
+            SaveChartsCommand = new DelegateCommand<IEnumerable<BitmapSource>>( SaveChartsCommandHandler );
+            LoadTemplatesCommand = new DelegateCommand( LoadTemplatesCommandHandler );
+            CopyUsersWithMarksCommand = new DelegateCommand<IEnumerable>( CopyUsersWithMarksCommandHandler );
+            CopyUsersWithoutMarksCommand = new DelegateCommand<IEnumerable>( CopyUsersWithoutMarksCommandHandler );
+            DeleteSelectedUserCommand = new DelegateCommand( DeleteSelectedUserCommandHandler );
+            SaveFinalResultCommand = new DelegateCommand( SaveFinalResultCommandHandler );
+            UndoDeleteUserCommand = new DelegateCommand( UndoDeleteUserCommandHandler );
+        }
+
+        #endregion
+
+
+        #region Non-public methods
+
+        private void SaveChartsCommandHandler( IEnumerable<BitmapSource> chartImages )
+        {
+            ExecuteAndCatchExceptions( () =>
+            {
+                var directoryPath = _viewProvider.QueryDirectoryName( this, ChartsDirectory );
+                if ( directoryPath == null )
+                    return;
+
+                ChartsDirectory = directoryPath;
+
+                if ( !Directory.Exists( directoryPath ) )
+                    Directory.CreateDirectory( directoryPath );
+
+                var index = 0;
+                var now = DateTime.Now.ToString( "dd-MM-yyyy" );
+                foreach ( var chartImage in chartImages )
+                {
+                    var png = new PngBitmapEncoder { Frames = { BitmapFrame.Create( chartImage ) } };
+
+                    using ( var stream = File.OpenWrite( Path.Combine( directoryPath, $"image_{now}_{++index}.png" ) ) )
+                        png.Save( stream );
+                }
+            } );
+        }
+
+        private void LoadTemplatesPreview( ICollection<ChartTemplate> templates )
+        {
+            // Setup questions view models
+            PreviewTemplates.Clear();
+
+            var templateMatches = _templateMatcher.MatchTemplates( templates, ForumTopic.Poll.Questions );
+
+            var fullMatches = 0;
+            var partialMatches = 0;
+
+            foreach ( var templateMatch in templateMatches )
+            {
+                if ( templateMatch.Key.Questions.Count == templateMatch.Value.Count )
+                    fullMatches ++;
+                else
+                    partialMatches ++;
+
+                var templateViewModel = new PreviewChartTemplateViewModel( templateMatch.Key, templateMatch.Value );
+                PreviewTemplates.Add( templateViewModel );
+            }
+
+            TemplateState = $"Шаблоны загружены. " +
+                            $"Точно совпало: {fullMatches}, " +
+                            $"частично: {partialMatches}, " +
+                            $"не совпало: {templates.Count - (fullMatches + partialMatches)}";
+        }
+
+        private void RefreshUsers()
+        {
+            AllUsers.Refresh();
+            VotedUsers.Refresh();
+            UsersWithVoteAndFeedback.Refresh();
+            UsersWithVoteOnly.Refresh();
+            UsersWithFeedbackOnly.Refresh();
+
+            AllUsersCount = _users.Where( AllUsersFilter ).Count();
+            VotedUsersCount = _users.Where( VotedUsersFilter ).Count();
+            UsersWithVoteAndFeedbackCount = _users.Where( UsersWithVoteAndFeedbackFilter ).Count();
+            UsersWithVoteOnlyCount = _users.Where( UsersWithVoteOnlyFilter ).Count();
+            UsersWithFeedbackOnlyCount = _users.Where( UsersWithFeedbackOnlyFilter ).Count();
+        }
+
+        private void ExecuteAndCatchExceptions( Action action )
+        {
+            try
+            {
+                action();
+            }
+            catch ( OperationCanceledException )
+            {
+                UiLogger.Warning( "The task has been cancelled" );
+            }
+            catch ( Exception ex )
+            {
+                UiLogger.Error( $"Необработанное исключение: {ex.Message}", ex );
+                OnTaskFailed( ex );
+            }
+        }
+
+        private void WriteCsvFile( string filePath )
+        {
+            try
+            {
+                UiLogger.Info( $"Сохранение результатов в файл '{filePath}'" );
+
+                var users = ForumTopic.Users.Where( user => !user.IsDeleted ).Select( user => $"{user.Name};{user.Mark}" );
+                var content = "Ники;Баллы".AppendSequence( users ).JoinToString( "\r\n" );
+
+                File.WriteAllText( filePath, content, new UTF8Encoding( true ) );
+            }
+            catch ( IOException ex )
+            {
+                UiLogger.Error( $"Ошибка при сохранении CSV-файла '{filePath}'", ex );
+            }
+        }
+
+        private void WriteTxtFile( string topicName, string filePath )
+        {
+            try
+            {
+                UiLogger.Info( $"Сохранение результатов в файл '{filePath}'" );
+
+                var users = ForumTopic.Users.Where( user => !user.IsDeleted ).Select( user => $"{user.Name} {user.Mark}" );
+                var content = $"{topicName}\r\n{"Ники Баллы"}".AppendSequence( users ).JoinToString( "\r\n" );
+
+                File.WriteAllText( filePath, content, new UTF8Encoding( true ) );
+            }
+            catch ( IOException ex )
+            {
+                UiLogger.Error( $"Ошибка при сохранении TXT-файла '{filePath}'", ex );
+            }
+        }
+
+        private UserViewModel FindNextSelectedUser()
+        {
+            var isSelectedUserFound = false;
+            var newSelectedUser = (UserViewModel) null;
+            foreach ( var user in _users )
+            {
+                if ( user == SelectedUser )
+                    isSelectedUserFound = true;
+                else if ( !user.IsDeleted )
+                {
+                    newSelectedUser = user;
+                    if ( isSelectedUserFound )
+                        break;
+                }
+            }
+            return newSelectedUser;
+        }
+
+        private void SetUsers( IEnumerable<User> users )
+        {
+            _users = new ObservableCollection<UserViewModel>( users.Where( user => !user.IsDeleted ).Select( user => new UserViewModel( user ) ) );
+            RecreateFilters();
+        }
+
+        private void RecreateFilters()
+        {
+            AllUsers = CollectionViewSource.GetDefaultView( _users );
+            AllUsers.Filter = AllUsersFilter;
+            AllUsersCount = _users.Where( AllUsersFilter ).Count();
+
+            VotedUsers = new CollectionViewSource { Source = _users }.View;
+            VotedUsers.Filter = VotedUsersFilter;
+            VotedUsersCount = _users.Where( VotedUsersFilter ).Count();
+
+            UsersWithVoteAndFeedback = new CollectionViewSource { Source = _users }.View;
+            UsersWithVoteAndFeedback.Filter = UsersWithVoteAndFeedbackFilter;
+            UsersWithVoteAndFeedbackCount = _users.Where( UsersWithVoteAndFeedbackFilter ).Count();
+
+            UsersWithVoteOnly = new CollectionViewSource { Source = _users }.View;
+            UsersWithVoteOnly.Filter = UsersWithVoteOnlyFilter;
+            UsersWithVoteOnlyCount = _users.Where( UsersWithVoteOnlyFilter ).Count();
+
+            UsersWithFeedbackOnly = new CollectionViewSource { Source = _users }.View;
+            UsersWithFeedbackOnly.Filter = UsersWithFeedbackOnlyFilter;
+            UsersWithFeedbackOnlyCount = _users.Where( UsersWithFeedbackOnlyFilter ).Count();
+        }
+
+        private static bool UsersWithFeedbackOnlyFilter( object u )
+        {
+            var user = (UserViewModel) u;
+            return !user.IsDeleted && user.HasFeedbackOnly;
+        }
+
+        private static bool UsersWithVoteOnlyFilter( object u )
+        {
+            var user = (UserViewModel) u;
+            return !user.IsDeleted && user.HasVoteOnly;
+        }
+
+        private static bool UsersWithVoteAndFeedbackFilter( object u )
+        {
+            var user = (UserViewModel) u;
+            return !user.IsDeleted && user.HasVoteAndFeedback;
+        }
+
+        private static bool VotedUsersFilter( object u )
+        {
+            var user = (UserViewModel) u;
+            return !user.IsDeleted && user.HasVote;
+        }
+
+        private static bool AllUsersFilter( object u )
+        {
+            var user = (UserViewModel) u;
+            return !user.IsDeleted;
+        }
 
         #endregion
 
@@ -508,8 +789,9 @@ namespace ForumParser.ViewModels.Windows
                 var fileNameResult = _viewProvider.Show<StringInputDialogViewModel>( this, inputDialog =>
                 {
                     inputDialog.ViewTitle = "Укажите имя сохраняемых файлов";
-                    inputDialog.Description =
-                        "Укажите имя сохраняемых файлов (без расширения).\nСуществующие файлы будут заменены.\nНедопустимые символы в имени (\\/*?:\"<>) будут заменены на _.";
+                    inputDialog.Description = "Укажите имя сохраняемых файлов (без расширения).\n" +
+                                              "Существующие файлы будут заменены.\n" +
+                                              "Недопустимые символы в имени (\\/*?:\"<>) будут заменены на _.";
                     inputDialog.StringInput = FixInvalidPathCharactersRegex.Replace( ForumTopic.Name, "_" );
                 } );
 
@@ -604,295 +886,6 @@ namespace ForumParser.ViewModels.Windows
             SelectedUser.IsDeleted = false;
 
             RefreshUsers();
-        }
-
-        #endregion
-
-
-        #region Events and invocation
-
-        /// <summary>
-        ///     Override this method to process unhandled exceptions thrown from executing task.
-        /// </summary>
-        /// <param name="exception">The exception thrown.</param>
-        protected override void OnTaskFailed( Exception exception )
-        {
-            _viewProvider.ShowMessageBox( this, exception.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error );
-        }
-
-        /// <summary>
-        ///     Called when the associated view has been just created.
-        /// </summary>
-        public void OnViewLoaded()
-        {
-            //  Do nothing
-        }
-
-        /// <summary>
-        ///     Called when the associated view is about to close. Return false to disallow closing window.
-        /// </summary>
-        public bool OnViewClosing()
-        {
-            if ( IsBusy )
-            {
-                var cancelation = _viewProvider.ShowMessageBox( this, "Операция в процессе. Действительно завершить работу?", "Подтверждение выхода",
-                                                                MessageBoxButton.OKCancel, MessageBoxImage.Warning );
-
-                if ( cancelation != true )
-                    return false;
-            }
-
-            CancelTask();
-            return true;
-        }
-
-        #endregion
-
-
-        #region Initialization
-
-        public MainWindowViewModel( IViewProvider viewProvider, ForumTopicParser forumParser, ILogger uiLogger, SaveLoadManager saveLoadManager ) : base( uiLogger )
-        {
-            UiLogger = uiLogger;
-            _saveLoadManager = saveLoadManager;
-            _viewProvider = viewProvider;
-            _forumParser = forumParser;
-            LoadForumTopicCommand = new AsyncDelegateCommand( LoadForumTopicCommandHandler );
-            SaveIntermediateResultCommand = new DelegateCommand( SaveIntermediateResultCommandHandler );
-            LoadIntermediateResultCommand = new DelegateCommand( LoadIntermediateResultCommandHandler );
-            SetAllUsersMarksCommand = new DelegateCommand<int>( SetAllUsersMarksCommandHandler );
-            EditTemplatesCommand = new DelegateCommand( EditTemplatesCommandHandler );
-            SaveTemplatesCommand = new DelegateCommand( SaveTemplatesCommandHandler );
-            SaveChartsCommand = new DelegateCommand( SaveChartsCommandHandler );
-            LoadTemplatesCommand = new DelegateCommand( LoadTemplatesCommandHandler );
-            CopyUsersWithMarksCommand = new DelegateCommand<IEnumerable>( CopyUsersWithMarksCommandHandler );
-            CopyUsersWithoutMarksCommand = new DelegateCommand<IEnumerable>( CopyUsersWithoutMarksCommandHandler );
-            DeleteSelectedUserCommand = new DelegateCommand( DeleteSelectedUserCommandHandler );
-            SaveFinalResultCommand = new DelegateCommand( SaveFinalResultCommandHandler );
-            UndoDeleteUserCommand = new DelegateCommand( UndoDeleteUserCommandHandler );
-        }
-
-        public string GetChartsSaveDirectory()
-        {
-            return _viewProvider.QueryDirectoryName( this, ChartsDirectory );
-        }
-
-        public string ChartsDirectory { get; set; }
-
-        private void SaveChartsCommandHandler()
-        {
-//            foreach ( var templateViewModel in PreviewTemplates )
-//            {
-//                var view = new ChartTemplateView();
-//                view.DataContext = templateViewModel;
-////                view.InitializeComponent();
-//                view.ApplyTemplate();
-//                view.UpdateLayout();
-//                view.Measure( new Size(templateViewModel.Width, templateViewModel.Height) );
-//                view.Arrange( new Rect( 0, 0, templateViewModel.Width, templateViewModel.Height) );
-//                var rtb = new RenderTargetBitmap((int)view.ActualWidth, (int)view.ActualHeight, 96, 96, PixelFormats.Pbgra32);
-//                rtb.Render(view);
-//                var png = new PngBitmapEncoder { Frames = { BitmapFrame.Create( rtb ) } };
-//
-//                using ( var stream = File.OpenWrite( "g:\\img" + DateTime.Now.Ticks + ".png" ) )
-//                {
-//                    png.Save( stream );
-//                }
-//            }
-        }
-
-        #endregion
-
-
-        #region Non-public methods
-
-        private void LoadTemplatesPreview( ICollection<ChartTemplate> templates )
-        {
-            // Setup questions view models
-            PreviewTemplates.Clear();
-
-            var questionsMap = ForumTopic.Poll.Questions.ToDictionary( question => question.Text, StringComparer.OrdinalIgnoreCase );
-
-            foreach ( var template in templates )
-            {
-                //  Find questions matching the template
-                var matches = template.Questions
-                                      .Select( question => new { TemplateQuestion = question, PollQuestion = FindMatchingPollQuestion( question, questionsMap ) } )
-                                      .Where( pair => pair.PollQuestion != null )
-                                      .ToList();
-
-                if ( matches.Any() )
-                {
-                    //  Add template view model
-                    var matchingQuestions = matches.Select( match => new KeyValuePair<TemplateQuestion, PollQuestion>( match.TemplateQuestion, match.PollQuestion ) );
-                    var templateViewModel = new PreviewChartTemplateViewModel( template, matchingQuestions );
-                    PreviewTemplates.Add( templateViewModel );
-                }
-            }
-        }
-
-        private static PollQuestion FindMatchingPollQuestion( TemplateQuestion templateQuestion, Dictionary<string, PollQuestion> questionsMap )
-        {
-            var pollQuestion = questionsMap.GetOrDefault( templateQuestion.QuestionText );
-
-            //  Determine cases when match is unsuccessful
-            if ( pollQuestion == null )
-                return null;
-
-            if ( pollQuestion.Answers.Count != templateQuestion.Answers.Count )
-                return null;
-
-            if ( !pollQuestion.Answers
-                              .Zip( templateQuestion.Answers,
-                                    ( pollAnswer, templateAnswerText ) => pollAnswer.Text.Equals( templateAnswerText, StringComparison.OrdinalIgnoreCase ) )
-                              .All( match => match ) )
-                return null;
-
-            //  The matching poll question has been found
-            return pollQuestion;
-        }
-
-        private void RefreshUsers()
-        {
-            AllUsers.Refresh();
-            VotedUsers.Refresh();
-            UsersWithVoteAndFeedback.Refresh();
-            UsersWithVoteOnly.Refresh();
-            UsersWithFeedbackOnly.Refresh();
-
-            AllUsersCount = _users.Where( AllUsersFilter ).Count();
-            VotedUsersCount = _users.Where( VotedUsersFilter ).Count();
-            UsersWithVoteAndFeedbackCount = _users.Where( UsersWithVoteAndFeedbackFilter ).Count();
-            UsersWithVoteOnlyCount = _users.Where( UsersWithVoteOnlyFilter ).Count();
-            UsersWithFeedbackOnlyCount = _users.Where( UsersWithFeedbackOnlyFilter ).Count();
-        }
-
-        private void ExecuteAndCatchExceptions( Action action )
-        {
-            try
-            {
-                action();
-            }
-            catch ( OperationCanceledException )
-            {
-                UiLogger.Warning( "The task has been cancelled" );
-            }
-            catch ( Exception ex )
-            {
-                UiLogger.Error( $"Необработанное исключение: {ex.Message}", ex );
-                OnTaskFailed( ex );
-            }
-        }
-
-        private void WriteCsvFile( string filePath )
-        {
-            try
-            {
-                UiLogger.Info( $"Сохранение результатов в файл '{filePath}'" );
-
-                var users = ForumTopic.Users.Where( user => !user.IsDeleted ).Select( user => $"{user.Name};{user.Mark}" );
-                var content = "Ники;Баллы".AppendSequence( users ).JoinToString( "\r\n" );
-
-                File.WriteAllText( filePath, content, new UTF8Encoding( true ) );
-            }
-            catch ( IOException ex )
-            {
-                UiLogger.Error( $"Ошибка при сохранении CSV-файла '{filePath}'", ex );
-            }
-        }
-
-        private void WriteTxtFile( string topicName, string filePath )
-        {
-            try
-            {
-                UiLogger.Info( $"Сохранение результатов в файл '{filePath}'" );
-
-                var users = ForumTopic.Users.Where( user => !user.IsDeleted ).Select( user => $"{user.Name} {user.Mark}" );
-                var content = $"{topicName}\r\n{"Ники Баллы"}".AppendSequence( users ).JoinToString( "\r\n" );
-
-                File.WriteAllText( filePath, content, new UTF8Encoding( true ) );
-            }
-            catch ( IOException ex )
-            {
-                UiLogger.Error( $"Ошибка при сохранении TXT-файла '{filePath}'", ex );
-            }
-        }
-
-        private UserViewModel FindNextSelectedUser()
-        {
-            var isSelectedUserFound = false;
-            var newSelectedUser = (UserViewModel) null;
-            foreach ( var user in _users )
-            {
-                if ( user == SelectedUser )
-                    isSelectedUserFound = true;
-                else if ( !user.IsDeleted )
-                {
-                    newSelectedUser = user;
-                    if ( isSelectedUserFound )
-                        break;
-                }
-            }
-            return newSelectedUser;
-        }
-
-        private void SetUsers( IEnumerable<User> users )
-        {
-            _users = new ObservableCollection<UserViewModel>( users.Where( user => !user.IsDeleted ).Select( user => new UserViewModel( user ) ) );
-            RecreateFilters();
-        }
-
-        private void RecreateFilters()
-        {
-            AllUsers = CollectionViewSource.GetDefaultView( _users );
-            AllUsers.Filter = AllUsersFilter;
-            AllUsersCount = _users.Where( AllUsersFilter ).Count();
-
-            VotedUsers = new CollectionViewSource { Source = _users }.View;
-            VotedUsers.Filter = VotedUsersFilter;
-            VotedUsersCount = _users.Where( VotedUsersFilter ).Count();
-
-            UsersWithVoteAndFeedback = new CollectionViewSource { Source = _users }.View;
-            UsersWithVoteAndFeedback.Filter = UsersWithVoteAndFeedbackFilter;
-            UsersWithVoteAndFeedbackCount = _users.Where( UsersWithVoteAndFeedbackFilter ).Count();
-
-            UsersWithVoteOnly = new CollectionViewSource { Source = _users }.View;
-            UsersWithVoteOnly.Filter = UsersWithVoteOnlyFilter;
-            UsersWithVoteOnlyCount = _users.Where( UsersWithVoteOnlyFilter ).Count();
-
-            UsersWithFeedbackOnly = new CollectionViewSource { Source = _users }.View;
-            UsersWithFeedbackOnly.Filter = UsersWithFeedbackOnlyFilter;
-            UsersWithFeedbackOnlyCount = _users.Where( UsersWithFeedbackOnlyFilter ).Count();
-        }
-
-        private static bool UsersWithFeedbackOnlyFilter( object u )
-        {
-            var user = (UserViewModel) u;
-            return !user.IsDeleted && user.HasFeedbackOnly;
-        }
-
-        private static bool UsersWithVoteOnlyFilter( object u )
-        {
-            var user = (UserViewModel) u;
-            return !user.IsDeleted && user.HasVoteOnly;
-        }
-
-        private static bool UsersWithVoteAndFeedbackFilter( object u )
-        {
-            var user = (UserViewModel) u;
-            return !user.IsDeleted && user.HasVoteAndFeedback;
-        }
-
-        private static bool VotedUsersFilter( object u )
-        {
-            var user = (UserViewModel) u;
-            return !user.IsDeleted && user.HasVote;
-        }
-
-        private static bool AllUsersFilter( object u )
-        {
-            var user = (UserViewModel) u;
-            return !user.IsDeleted;
         }
 
         #endregion

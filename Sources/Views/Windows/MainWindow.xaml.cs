@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,14 +14,41 @@ using WpfCommon.Views.Base;
 namespace ForumParser.Views.Windows
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    ///     Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : WindowBase<MainWindowViewModel>
     {
+        #region Properties
+
+        public IEnumerable<BitmapSource> TemplateImages
+        {
+            get
+            {
+                foreach ( var view in ChartsList.EnumerateChildren( true ).OfType<ChartTemplateView>() )
+                {
+                    view.GripVisible = false;
+                    var rtb = new RenderTargetBitmap( (int) view.ActualWidth, (int) view.ActualHeight, 96, 96, PixelFormats.Pbgra32 );
+                    rtb.Render( (Visual) view.Content );
+                    view.GripVisible = true;
+                    yield return rtb;
+                }
+            }
+        }
+
+        #endregion
+
+
+        #region Initialization
+
         public MainWindow( MainWindowViewModel viewModel ) : base( viewModel )
         {
             InitializeComponent();
         }
+
+        #endregion
+
+
+        #region Event handlers
 
         private void UsersGrid_PreviewKeyDown( object sender, KeyEventArgs e )
         {
@@ -42,33 +68,18 @@ namespace ForumParser.Views.Windows
             }
         }
 
+        #endregion
+
+
+        #region Non-public methods
+
         private void FocusSelectedUser()
         {
             var gridRow = (UIElement) AllUsersGrid.ItemContainerGenerator.ContainerFromItem( ViewModel.SelectedUser );
-            var gridCell = gridRow?.EnumerateChildren( recursive: true ).OfType<DataGridCell>().FirstOrDefault();
+            var gridCell = gridRow?.EnumerateChildren( true ).OfType<DataGridCell>().FirstOrDefault();
             gridCell?.Focus();
         }
 
-        private void SaveCharts_Click( object sender, RoutedEventArgs e )
-        {
-            var directoryPath = ViewModel.GetChartsSaveDirectory();
-            if ( directoryPath != null )
-            {
-                if ( !Directory.Exists( directoryPath ) )
-                    Directory.CreateDirectory( directoryPath );
-
-                foreach ( var view in ChartsList.EnumerateChildren(true).OfType<ChartTemplateView>() )
-                {
-                    var rtb = new RenderTargetBitmap( (int) view.ActualWidth, (int) view.ActualHeight, 96, 96, PixelFormats.Pbgra32 );
-                    rtb.Render( view );
-                    var png = new PngBitmapEncoder { Frames = { BitmapFrame.Create( rtb ) } };
-
-                    using (var stream = File.OpenWrite(Path.Combine(directoryPath, "img" + DateTime.Now.Ticks + ".png")))
-                    {
-                        png.Save(stream);
-                    }
-                }
-            }
-        }
+        #endregion
     }
 }

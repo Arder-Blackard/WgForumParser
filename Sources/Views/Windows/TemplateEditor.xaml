@@ -42,7 +42,7 @@
             </Grid.Resources>
             <Button Grid.Column="0" Content="Справка" Margin="3,3,0,0" HorizontalAlignment="Left"
                     VerticalAlignment="Top" />
-            <Button Grid.Column="2" Content="OK" HorizontalAlignment="Left" Click="Ok_Click"/>
+            <Button Grid.Column="2" Content="OK" HorizontalAlignment="Left" Click="Ok_Click" />
             <Button Grid.Column="3" Content="Отмена" HorizontalAlignment="Left" Click="Cancel_Click" />
         </Grid>
         <Grid>
@@ -119,15 +119,16 @@
                             <Path.Data>
                                 <PathGeometry>
                                     <PathFigure StartPoint="{Binding Path=Point0}">
-                                        <BezierSegment IsStroked="True" Point1="{Binding Path=Point1}" Point2="{Binding Path=Point2}" Point3="{Binding Path=Point3}" />
+                                        <BezierSegment IsStroked="True" Point1="{Binding Path=Point1}"
+                                                       Point2="{Binding Path=Point2}" Point3="{Binding Path=Point3}" />
                                     </PathFigure>
                                 </PathGeometry>
                             </Path.Data>
                         </Path>
-
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+
             <GroupBox Grid.Column="3" Header="Результирующие графики">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Top" HorizontalAlignment="Left" Margin="5">
@@ -143,7 +144,8 @@
                             <Label Target="{Binding ElementName=UnifiedHeightText}" Content="Высота:" />
                             <TextBox x:Name="UnifiedHeightText" Text="{Binding UnifiedHeight}" Width="120" />
                         </StackPanel>
-                        <Button Content="Задать размер всем графикам" Command="{Binding SetEqualSizeCommand}" Margin="4" />
+                        <Button Content="Задать размер всем графикам" Command="{Binding SetEqualSizeCommand}"
+                                Margin="4" />
                     </StackPanel>
                     <!-- Template charts -->
                     <Border BorderBrush="Black" BorderThickness="1">
@@ -160,7 +162,7 @@
                                           HorizontalContentAlignment="Left">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <controls:HotspotContainer Hotspot="0,0.5" HorizontalContentAlignment="Left">
+                                        <controls:HotspotContainer Hotspot="0,0.5" Padding="4">
                                             <controls:ChartTemplateView
                                                 HorizontalAlignment="Left"
                                                 BorderThickness="1"
@@ -169,8 +171,8 @@
                                                 PreviewDragEnter="MergedChart_DragEnter"
                                                 PreviewDragLeave="MergedChart_DragLeave"
                                                 PreviewDragOver="MergedChart_DragOver"
-                                                Drop="MergedChart_Drop" 
-                                                MouseDoubleClick="MergedChart_DoubleClick"/>
+                                                Drop="MergedChart_Drop"
+                                                MouseDoubleClick="MergedChart_DoubleClick" />
                                         </controls:HotspotContainer>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

@@ -23,6 +23,7 @@ namespace ForumParser.ViewModels.Windows
         private AsyncObservableCollection<PollQuestionChartViewModel> _questions;
         private AsyncObservableCollection<EditableChartTemplateViewModel> _editorTemplates = new AsyncObservableCollection<EditableChartTemplateViewModel>();
         private AsyncObservableCollection<QuestionChartMapping> _questionTemplateConnections = new AsyncObservableCollection<QuestionChartMapping>();
+        private readonly TemplateMatcher _templateMatcher;
 
         #endregion
 
@@ -113,9 +114,10 @@ namespace ForumParser.ViewModels.Windows
 
         #region Initialization
 
-        public TemplateEditorViewModel( IViewProvider viewProvider )
+        public TemplateEditorViewModel( IViewProvider viewProvider, TemplateMatcher templateMatcher )
         {
             _viewProvider = viewProvider;
+            _templateMatcher = templateMatcher;
             CreateNewChartCommand = new DelegateCommand<PollQuestion>( CreateNewChartCommandHandler );
             AddQuestionToTemplateCommand = new DelegateCommand<Tuple<EditableChartTemplateViewModel, PollQuestion>>( AddQuestionToTemplateCommandHandler );
             RemoveQuestionFromTemplateCommand = new DelegateCommand<PollQuestion>( RemoveQuestionFromTemplateCommandHandler );
@@ -139,26 +141,18 @@ namespace ForumParser.ViewModels.Windows
 
             EditorTemplates.Clear();
 
-            var questionsMap = Questions.ToDictionary( question => question.Text, StringComparer.OrdinalIgnoreCase );
+            var templateMatches = _templateMatcher.MatchTemplates( templates, pollQuestions);
+            var questionsViewModelsMap = Questions.ToDictionary( viewModel => viewModel.Question );
 
-            foreach ( var template in templates )
+            foreach ( var templateMatch in templateMatches )
             {
-                //  Find questions matching the template
-                var matches = template.Questions
-                                      .Select( question => new { TemplateQuestion = question, PollQuestionViewModel = FindMatchingPollQuestion( question, questionsMap ) } )
-                                      .Where( pair => pair.PollQuestionViewModel != null )
-                                      .ToList();
-
-                if ( matches.Any() )
+                var templateCopy = templateMatch.Key.Copy();
+                templateCopy.Questions = templateMatch.Value.Select( pair => pair.Key ).ToList();
+                var templateViewModel = new EditableChartTemplateViewModel( templateCopy, templateMatch.Value );
+                EditorTemplates.Add( templateViewModel );
+                foreach ( var pair in templateMatch.Value )
                 {
-                    //  Add template view model
-                    var matchingQuestions = matches.Select( match => new KeyValuePair<TemplateQuestion, PollQuestion>( match.TemplateQuestion, match.PollQuestionViewModel.Question ) );
-                    var templateViewModel = new EditableChartTemplateViewModel( template.Copy(), matchingQuestions );
-                    EditorTemplates.Add( templateViewModel );
-
-                    //  Add questions-template connections 
-                    foreach ( var match in matches )
-                        QuestionTemplateConnections.Add( new QuestionChartMapping( match.PollQuestionViewModel, templateViewModel ) );
+                    QuestionTemplateConnections.Add( new QuestionChartMapping( questionsViewModelsMap[pair.Value], templateViewModel ) );
                 }
             }
 

@@ -106,7 +106,7 @@ namespace ForumParser.ViewModels.Controls
 
             CalculateGridParameters( ref maxValue, out gridStep );
 
-            MaxValue = maxValue * 1.1;
+            MaxValue = maxValue;
             GridLines = Enumerable.Range( 1, (int) (maxValue/gridStep) )
                                   .Select( value => (value*gridStep).ToString( CultureInfo.InvariantCulture ) )
                                   .ToArray();

@@ -139,6 +139,7 @@
     <Compile Include="Sources\Services\ISingletonService.cs" />
     <Compile Include="Sources\Services\SaveLoadManager.cs" />
     <Compile Include="Sources\Services\SettingsManager.cs" />
+    <Compile Include="Sources\TemplateMatcher.cs" />
     <Compile Include="Sources\ViewModels\Controls\ChartTemplateViewModel.cs" />
     <Compile Include="Sources\ViewModels\Controls\PreviewChartTemplateViewModel.cs" />
     <Compile Include="Sources\ViewModels\Controls\PollQuestionChartViewModel.cs" />

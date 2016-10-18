@@ -12,6 +12,7 @@
                  xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
                  xmlns:behaviors="clr-namespace:ForumParser.Views.Behaviors"
                  xmlns:controls="clr-namespace:ForumParser.Views.Controls"
+                 xmlns:windows="clr-namespace:ForumParser.Views.Windows"
                  mc:Ignorable="d"
                  Height="800" Width="1400" MinWidth="960" MinHeight="600"
                  d:DataContext="{d:DesignInstance d:Type={x:Type viewModels:MainWindowViewModel}, d:IsDesignTimeCreatable=True}"
@@ -401,13 +402,18 @@
                             </Grid.RowDefinitions>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock VerticalAlignment="Center" Margin="0,0,5,0">Шаблон:</TextBlock>
-                                <Button Padding="6,2" Margin="3" Content="Загрузить..." Command="{Binding LoadTemplatesCommand}"/>
-                                <Button Padding="6,2" Margin="3" Content="Сохранить..." Command="{Binding SaveTemplatesCommand}"/>
-                                <Button Padding="6,2" Margin="3" Content="Редактировать..." Command="{Binding EditTemplatesCommand}" />
+                                <Button Padding="6,2" Margin="3" Content="Загрузить..."
+                                        Command="{Binding LoadTemplatesCommand}" />
+                                <Button Padding="6,2" Margin="3" Content="Сохранить..."
+                                        Command="{Binding SaveTemplatesCommand}" />
+                                <Button Padding="6,2" Margin="3" Content="Редактировать..."
+                                        Command="{Binding EditTemplatesCommand}" />
                                 <TextBlock VerticalAlignment="Center" Margin="5,0,5,0">Графики:</TextBlock>
-                                <Button Padding="6,2" Margin="3" Content="Сохранить..." Click="SaveCharts_Click"/>
+                                <Button Padding="6,2" Margin="3" Content="Сохранить..." 
+                                        Command="{Binding SaveChartsCommand}"
+                                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=windows:MainWindow}, Path=TemplateImages}" />
                             </StackPanel>
-                            <TextBlock Grid.Row="1">{Template state}</TextBlock>
+                            <TextBlock Grid.Row="1" Text ="{Binding TemplateState}"></TextBlock>
                             <Grid Grid.Row="2" Margin="0,12,0,0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
@@ -430,11 +436,9 @@
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <controls:ChartTemplateView
-                                                        HorizontalAlignment="Left"
-                                                        BorderThickness="1"
-                                                        Margin="4"
-                                                        AllowDrop="True" />
+                                                    <Border Margin="4">
+                                                        <controls:ChartTemplateView />
+                                                    </Border>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>

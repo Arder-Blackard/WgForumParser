@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Linq;
 using ForumParser.Models;
-using WpfCommon.ViewModels.Base;
 
 namespace ForumParser.ViewModels.Controls
 {
@@ -26,7 +23,7 @@ namespace ForumParser.ViewModels.Controls
                 // ReSharper disable once CompareOfFloatsByEqualityOperator
                 if ( Template.Width == value )
                     return;
-                Template.Width = value;
+                Template.Width = Math.Floor( value );
                 OnPropertyChanged();
             }
         }
@@ -42,7 +39,7 @@ namespace ForumParser.ViewModels.Controls
                 // ReSharper disable once CompareOfFloatsByEqualityOperator
                 if ( Template.Height == value )
                     return;
-                Template.Height = value;
+                Template.Height = Math.Floor(value);
                 OnPropertyChanged();
             }
         }

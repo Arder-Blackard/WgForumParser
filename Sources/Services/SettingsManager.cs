@@ -47,7 +47,8 @@ namespace ForumParser.Services
             if ( !Directory.Exists( appDirectory ) )
                 Directory.CreateDirectory( appDirectory );
 
-            var settings = JsonConvert.SerializeObject( Settings, Formatting.Indented, new JsonSerializerSettings { PreserveReferencesHandling = PreserveReferencesHandling.All } );
+            var settings = JsonConvert.SerializeObject( Settings, Formatting.Indented,
+                                                        new JsonSerializerSettings { PreserveReferencesHandling = PreserveReferencesHandling.All } );
             File.WriteAllText( Path.Combine( appDirectory, SettingsFileName ), settings );
         }
 
@@ -56,13 +57,13 @@ namespace ForumParser.Services
             var settingsPath = Path.Combine( GetAppDirectory(), SettingsFileName );
             try
             {
-                _logger?.Trace( () => $"Loading the settings from '{settingsPath}'" );
+                _logger?.Trace( () => $"Загрузка настроек из '{settingsPath}'" );
 
                 Settings = JsonConvert.DeserializeObject<Settings>( File.ReadAllText( settingsPath ) );
             }
             catch ( Exception )
             {
-                _logger?.Warning( () => $"No valid settings file found. Recreating with default settings at '{settingsPath}'" );
+                _logger?.Warning( () => $"Не найден файл настроек. Создан файл с настройками по умолчанию '{settingsPath}'" );
 
                 Settings = new Settings();
                 Save();

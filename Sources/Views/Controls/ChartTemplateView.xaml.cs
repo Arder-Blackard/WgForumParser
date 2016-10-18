@@ -11,12 +11,31 @@ namespace ForumParser.Views.Controls
     /// </summary>
     public partial class ChartTemplateView : UserControl
     {
+        #region Constants
+
+        public static readonly DependencyProperty GripVisibleProperty = DependencyProperty.Register(
+            "GripVisible", typeof (bool), typeof (ChartTemplateView), new FrameworkPropertyMetadata( true ) );
+
+        #endregion
+
+
         #region Fields
 
         private Vector _initialDelta;
         private Size _initialSize;
         private Point _resizeOrigin;
         private bool _resizing;
+
+        #endregion
+
+
+        #region Properties
+
+        public bool GripVisible
+        {
+            get { return (bool) GetValue( GripVisibleProperty ); }
+            set { SetValue( GripVisibleProperty, value ); }
+        }
 
         #endregion
 
