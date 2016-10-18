@@ -199,6 +199,18 @@ namespace ForumParser.Services.CefHandlers
         }
 
         /// <summary>
+        /// Called on the CEF IO thread to optionally filter resource response content.
+        /// </summary>
+        /// <param name="browserControl">The ChromiumWebBrowser control</param><param name="browser">the browser object</param><param name="frame">The frame that is being redirected.</param><param name="request">the request object - cannot be modified in this callback</param><param name="response">the response object - cannot be modified in this callback</param>
+        /// <returns>
+        /// Return an IResponseFilter to intercept this response, otherwise return null
+        /// </returns>
+        public IResponseFilter GetResourceResponseFilter( IWebBrowser browserControl, IBrowser browser, IFrame frame, IRequest request, IResponse response )
+        {
+            return null;
+        }
+
+        /// <summary>
         ///     Called on the CEF IO thread when a resource load has completed.
         /// </summary>
         /// <param name="browserControl">The ChromiumWebBrowser control</param>

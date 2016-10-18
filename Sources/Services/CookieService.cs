@@ -43,6 +43,14 @@ namespace ForumParser.Services
             public Task<IList<Cookie>> GetCookies() => _taskCompletionSource.Task;
 
             #endregion
+
+
+            /// <summary>
+            /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+            /// </summary>
+            public void Dispose()
+            {
+            }
         }
 
         #endregion

@@ -72,30 +72,29 @@
                     </Trigger>
                 </ControlTemplate.Triggers>
             </ControlTemplate>
+            
+            <ControlTemplate TargetType="{x:Type Expander}" x:Key="ExpanderTemplate">
+                <DockPanel Background="{TemplateBinding Background}">
+                    <ToggleButton x:Name="ExpanderButton" DockPanel.Dock="Top" Content="{TemplateBinding Header}"
+                                      IsChecked="{Binding Path=IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
+                                      OverridesDefaultStyle="True" Padding="1.5,0"
+                                      Template="{StaticResource ExpanderToggleButton}" />
+
+                    <ContentPresenter x:Name="ExpanderContent" Visibility="Collapsed" DockPanel.Dock="Bottom"
+                                          Margin="{TemplateBinding Padding}" />
+
+                </DockPanel>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsExpanded" Value="True">
+                        <Setter TargetName="ExpanderContent" Property="Visibility" Value="Visible" />
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
 
         </Grid.Resources>
 
         <!-- Parameters -->
         <Border BorderThickness="1" BorderBrush="DarkGray">
-            <Border.Resources>
-                <ControlTemplate TargetType="{x:Type Expander}" x:Key="ExpanderTemplate">
-                    <DockPanel Background="{TemplateBinding Background}">
-                        <ToggleButton x:Name="ExpanderButton" DockPanel.Dock="Top" Content="{TemplateBinding Header}"
-                                      IsChecked="{Binding Path=IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
-                                      OverridesDefaultStyle="True" Padding="1.5,0"
-                                      Template="{StaticResource ExpanderToggleButton}" />
-
-                        <ContentPresenter x:Name="ExpanderContent" Visibility="Collapsed" DockPanel.Dock="Bottom"
-                                          Margin="{TemplateBinding Padding}" />
-
-                    </DockPanel>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsExpanded" Value="True">
-                            <Setter TargetName="ExpanderContent" Property="Visibility" Value="Visible" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Border.Resources>
             <Expander Header="Параметры" IsExpanded="True" Background="{x:Static SystemColors.ControlBrush}"
                       Template="{StaticResource ExpanderTemplate}" Padding="5"
                       IsEnabled="{Binding IsBusy, Converter={x:Static c:Converters.Not}}">

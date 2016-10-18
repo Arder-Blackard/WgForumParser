@@ -377,7 +377,9 @@ namespace ForumParser.Services
             private static IBrowsingContext CreateBrowsingContext( string topicUrl, string sessionId )
             {
                 var url = Url.Create( topicUrl );
-                var config = new Configuration().WithDefaultLoader().With( new MemoryCookieService { [url.Origin] = $"frm_session_id={sessionId}" } );
+                var cookieProvider = new MemoryCookieProvider();
+                cookieProvider.SetCookie( url.Origin, $"frm_session_id={sessionId}" );
+                var config = new Configuration().WithDefaultLoader().With( cookieProvider );
                 return BrowsingContext.New( config );
             }
 
